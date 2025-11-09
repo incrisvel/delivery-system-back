@@ -1,4 +1,4 @@
-# Notifications
+# Notification
 
 Serviço de notificações.
 
