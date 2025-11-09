@@ -16,8 +16,8 @@ cd delivery-system-back
     - Rodar o comando `python scripts/tasks.py install-all`
 
 3. Definir variáveis de ambiente
-    - Copiar os arquivos de exemplo (*.example)
-    - Preencher com valores reais das variáveis gerais e/ou específicas
+    - Copiar os arquivos de exemplo (.env.example) e renomeá-los para .env
+    - Preencher com valores reais para as variáveis gerais (na raiz) ou específicas (em cada serviço)
 
 4. Rodar serviços
     - `python -m services.order_service.src.service`
