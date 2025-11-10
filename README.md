@@ -17,6 +17,7 @@ cd delivery-system-back
 
 3. Definir variáveis de ambiente
     - Copiar os arquivos de exemplo (.env.example) e renomeá-los para .env
+        - Ex.: `cp .env.example .env` ou `cp services/order_service/.env.example services/order_service/.env` para o serviço de pedidos
     - Preencher com valores reais para as variáveis gerais (na raiz) ou específicas (em cada serviço)
 
 4. Rodar serviços
