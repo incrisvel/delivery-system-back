@@ -6,18 +6,8 @@ parameters = None
 
 class ServiceManager:
 
-    def __init__(self, settings):
-        credentials = pika.PlainCredentials(
-            settings.rabbitmq_user,
-            settings.rabbitmq_pass
-        )
-
-        self.parameters = pika.ConnectionParameters(
-            settings.rabbitmq_host,
-            settings.rabbitmq_port,
-            settings.rabbitmq_vhost,
-            credentials
-        )
+    def __init__(self, parameters):
+        self.parameters = parameters
 
     def create_channel(self):
         connection = pika.BlockingConnection(self.parameters)

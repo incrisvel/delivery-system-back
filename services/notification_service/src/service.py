@@ -22,7 +22,7 @@ class NotificationService:
             credentials,
         )
 
-        self.service_manager = service_manager.ServiceManager(settings)
+        self.service_manager = service_manager.ServiceManager(parameters)
 
         self.__components_setup()
 
