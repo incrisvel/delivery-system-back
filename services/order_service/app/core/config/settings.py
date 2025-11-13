@@ -3,6 +3,7 @@ from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
     database_url: str
+    open_route_key: str
 
     class Config:
         env_file = ".env"
