@@ -1,13 +1,21 @@
 import pika
-import uuid
 from typing import Dict, Any
 
-parameters = None
+from .settings import settings
 
-class ServiceManager:
+class ConnectionManager:
 
-    def __init__(self, parameters):
-        self.parameters = parameters
+    def __init__(self):
+        credentials = pika.PlainCredentials(
+            settings.rabbitmq_user, settings.rabbitmq_pass
+        )
+
+        self.parameters = pika.ConnectionParameters(
+            settings.rabbitmq_host,
+            settings.rabbitmq_port,
+            settings.rabbitmq_vhost,
+            credentials,
+        )
 
     def create_channel(self):
         connection = pika.BlockingConnection(self.parameters)
@@ -35,4 +43,3 @@ class ServiceManager:
                     routing_key=routing_key
                     )
         return queue
-

@@ -1,9 +1,6 @@
-import pika
 import uuid
 
-from services.service_utils import service_manager
-
-from ..settings import settings
+from ...service_utils.connection_manager import ConnectionManager
 
 
 class NotificationService:
@@ -11,18 +8,7 @@ class NotificationService:
         self.id = str(uuid.uuid4())[:4]
         self.deliveries = {}
 
-        credentials = pika.PlainCredentials(
-            settings.rabbitmq_user, settings.rabbitmq_pass
-        )
-
-        parameters = pika.ConnectionParameters(
-            settings.rabbitmq_host,
-            settings.rabbitmq_port,
-            settings.rabbitmq_vhost,
-            credentials,
-        )
-
-        self.service_manager = service_manager.ServiceManager(parameters)
+        self.connection = ConnectionManager()
 
         self.__components_setup()
 
@@ -32,11 +18,11 @@ class NotificationService:
         self.__producer_setup()
 
     def __consumer_setup(self):
-        self.channel_consumer = self.service_manager.create_channel()
-        self.orders_exchange = self.service_manager.create_exchange(
+        self.channel_consumer = self.connection.create_channel()
+        self.orders_exchange = self.connection.create_exchange(
             self.channel_consumer, "orders_exchange", "topic"
         )
-        self.notification_queue = self.service_manager.create_queue(
+        self.notification_queue = self.connection.create_queue(
             self.channel_consumer,
             "notification_queue",
             bindings=[
@@ -45,18 +31,18 @@ class NotificationService:
         )
 
     def __producer_setup(self):
-        self.channel_producer = self.service_manager.create_channel()
-        self.notifications_exchange = self.service_manager.create_exchange(
+        self.channel_producer = self.connection.create_channel()
+        self.notifications_exchange = self.connection.create_exchange(
             self.channel_producer, "notifications_exchange", "fanout"
         )
-        self.orders_queue = self.service_manager.create_queue(
+        self.orders_queue = self.connection.create_queue(
             self.channel_producer,
             "orders_queue",
             bindings=[
                 {"exchange": "notifications_exchange"},
             ]
         )
-        self.delivery_queue = self.service_manager.create_queue(
+        self.delivery_queue = self.connection.create_queue(
             self.channel_producer,
             "delivery_queue",
             bindings=[
