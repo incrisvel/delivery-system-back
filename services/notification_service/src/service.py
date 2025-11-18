@@ -19,35 +19,21 @@ class NotificationService:
 
     def __consumer_setup(self):
         self.channel_consumer = self.connection.create_channel()
-        self.orders_exchange = self.connection.create_exchange(
-            self.channel_consumer, "orders_exchange", "topic"
+        self.order_exchange = self.connection.create_exchange(
+            self.channel_consumer, "order_exchange", "topic"
         )
         self.notification_queue = self.connection.create_queue(
             self.channel_consumer,
             "notification_queue",
             bindings=[
-                {"exchange": "orders_exchange", "routing_key": "order.*"}
+                {"exchange": "order_exchange", "routing_key": "order.*"}
             ]
         )
 
     def __producer_setup(self):
         self.channel_producer = self.connection.create_channel()
-        self.notifications_exchange = self.connection.create_exchange(
-            self.channel_producer, "notifications_exchange", "fanout"
-        )
-        self.orders_queue = self.connection.create_queue(
-            self.channel_producer,
-            "orders_queue",
-            bindings=[
-                {"exchange": "notifications_exchange"},
-            ]
-        )
-        self.delivery_queue = self.connection.create_queue(
-            self.channel_producer,
-            "delivery_queue",
-            bindings=[
-                {"exchange": "notifications_exchange"},
-            ]
+        self.notification_exchange = self.connection.create_exchange(
+            self.channel_producer, "notification_exchange", "fanout"
         )
 
 if __name__ == "__main__":

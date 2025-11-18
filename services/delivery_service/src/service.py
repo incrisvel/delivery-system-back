@@ -19,26 +19,19 @@ class DeliveryService:
 
     def __consumer_setup(self):
         self.channel_consumer = self.connection.create_channel()
-        self.notifications_exchange = self.connection.create_exchange(
-            self.channel_consumer, "notifications_exchange", "fanout"
+        self.order_exchange = self.connection.create_exchange(
+            self.channel_consumer, "order_exchange", "topic"
         )
         self.delivery_queue = self.connection.create_queue(
             self.channel_consumer,
             "delivery_queue",
             bindings=[
-                {"exchange": "notifications_exchange"},
+                {"exchange": "order_exchange", "routing_key": "order.created"}
             ]
         )
 
     def __producer_setup(self):
         self.channel_producer = self.connection.create_channel()
-        self.orders_exchange = self.connection.create_exchange(
-            self.channel_producer, "orders_exchange", "topic"
-        )
-        self.orders_queue = self.connection.create_queue(
-            self.channel_producer,
-            "orders_queue",
-            bindings=[
-                {"exchange": "orders_exchange", "routing_key": "order.created"}
-            ]
+        self.order_exchange = self.connection.create_exchange(
+            self.channel_producer, "order_exchange", "topic"
         )
