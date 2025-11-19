@@ -1,6 +1,6 @@
 import uuid
 
-from ...service_utils.connection_manager import ConnectionManager
+from ...shared.connection_manager import ConnectionManager
 
 
 class NotificationService:
