@@ -3,7 +3,7 @@ import uuid
 from ...service_utils.connection_manager import ConnectionManager
 
 
-class NotificationService:
+class DeliveryService:
     def __init__(self):
         self.id = str(uuid.uuid4())[:4]
         self.deliveries = {}
@@ -22,20 +22,16 @@ class NotificationService:
         self.order_exchange = self.connection.create_exchange(
             self.channel_consumer, "order_exchange", "topic"
         )
-        self.notification_queue = self.connection.create_queue(
+        self.delivery_queue = self.connection.create_queue(
             self.channel_consumer,
-            "notification_queue",
+            "delivery_queue",
             bindings=[
-                {"exchange": "order_exchange", "routing_key": "order.*"}
+                {"exchange": "order_exchange", "routing_key": "order.created"}
             ]
         )
 
     def __producer_setup(self):
         self.channel_producer = self.connection.create_channel()
-        self.notification_exchange = self.connection.create_exchange(
-            self.channel_producer, "notification_exchange", "fanout"
+        self.order_exchange = self.connection.create_exchange(
+            self.channel_producer, "order_exchange", "topic"
         )
-
-if __name__ == "__main__":
-    service = NotificationService()
-    print(f"Notification Service - ID: {service.id}")
