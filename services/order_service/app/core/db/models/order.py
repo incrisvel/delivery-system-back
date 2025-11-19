@@ -33,7 +33,9 @@ class Order(Base):
         onupdate=lambda: datetime.now(tz=ZoneInfo("UTC")),
         nullable=False,
     )
-    status: Mapped[OrderStatus] = mapped_column(SQLEnum(OrderStatus), nullable=False)
+    status: Mapped[OrderStatus] = mapped_column(
+        SQLEnum(OrderStatus), nullable=False, default=OrderStatus.CONFIRMED
+    )
 
     establishment_id: Mapped[int] = mapped_column(
         ForeignKey("establishments.id"), nullable=False

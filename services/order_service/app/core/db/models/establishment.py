@@ -13,3 +13,4 @@ class Establishment(Base):
     longitude: Mapped[float] = mapped_column(Float, nullable=False)
 
     orders = relationship("Order", back_populates="establishment")
+    dishes = relationship("Dish", back_populates="establishment")
