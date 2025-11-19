@@ -1,7 +1,12 @@
-from typing import Annotated
-from fastapi import APIRouter, Depends
+from typing import Annotated, List, Optional
+from fastapi import APIRouter, Depends, Query
 from http import HTTPStatus
 
+from app.modules.establishment.schemas import (
+    EstablishmentCreate,
+    EstablishmentRead,
+    EstablishmentUpdate,
+)
 from app.modules.establishment.service import (
     EstablishmentService,
     get_establishment_service,
@@ -15,26 +20,50 @@ EstablishmentServiceDep = Annotated[
 ]
 
 
-@router.get("", status_code=HTTPStatus.OK)
+@router.get("", response_model=List[EstablishmentRead], status_code=HTTPStatus.OK)
 def get_all(establishment_service: EstablishmentServiceDep):
-    return
+    establishments = establishment_service.get_all_establishments()
+    return establishments
 
 
-@router.get("/{establishment_id}", status_code=HTTPStatus.OK)
-def get_by_id(establishment_id: int, establishment_service: EstablishmentServiceDep):
-    return
+@router.get(
+    "/{establishment_id}", response_model=EstablishmentRead, status_code=HTTPStatus.OK
+)
+def get_by_id(
+    establishment_id: int,
+    establishment_service: EstablishmentServiceDep,
+    name: Optional[str] = Query(None),
+):
+    establishment = establishment_service.get_establishment_by_id(establishment_id, name)
+    return establishment
 
 
-@router.post("", status_code=HTTPStatus.CREATED)
-def create_establishment(establishment_service: EstablishmentServiceDep):
-    return
+@router.post("", response_model=EstablishmentRead, status_code=HTTPStatus.CREATED)
+def create_establishment(
+    establishment_create: EstablishmentCreate,
+    establishment_service: EstablishmentServiceDep,
+):
+    establishment = establishment_service.create_establishment(establishment_create)
+    return establishment
 
 
-@router.put("/{establishment_id}", status_code=HTTPStatus.OK)
-def update_establishment(establishment_service: EstablishmentServiceDep):
-    return
+@router.put(
+    "/{establishment_id}", response_model=EstablishmentRead, status_code=HTTPStatus.OK
+)
+def update_establishment(
+    establishment_id: int,
+    establishment_update: EstablishmentUpdate,
+    establishment_service: EstablishmentServiceDep,
+):
+    establishment = establishment_service.update_establishment(
+        establishment_id, establishment_update
+    )
+    return establishment
 
 
 @router.delete("/{establishment_id}", status_code=HTTPStatus.OK)
-def delete_establishment(establishment_service: EstablishmentServiceDep):
+def delete_establishment(
+    establishment_id: int, establishment_service: EstablishmentServiceDep
+):
+    establishment_service.delete_establishment(establishment_id)
     return

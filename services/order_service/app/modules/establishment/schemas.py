@@ -1,16 +1,24 @@
-from app.core.exceptions.base import ForbiddenError, NotFoundError, ValidationError
+from typing import Optional
+from pydantic import BaseModel
 
 
-class EstablishmentNotFoundError(NotFoundError):
-    def __init__(self, message="Estabelecimento não encontrado."):
-        super().__init__(message)
+class EstablishmentRead(BaseModel):
+    id: int
+    name: str
+    image: Optional[str] = None
+    latitude: float
+    longitude: float
 
 
-class EstablishmentValidationError(ValidationError):
-    def __init__(self, message="Estabelecimento possui dados inválidos."):
-        super().__init__(message)
+class EstablishmentCreate(BaseModel):
+    name: str
+    image: Optional[str] = None
+    latitude: float
+    longitude: float
 
 
-class EstablishmentForbiddenError(ForbiddenError):
-    def __init__(self, message="Acesso negado ao estabelecimento."):
-        super().__init__(message)
+class EstablishmentUpdate(BaseModel):
+    name: Optional[str] = None
+    image: Optional[str] = None
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
