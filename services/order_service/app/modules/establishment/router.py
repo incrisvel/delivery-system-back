@@ -41,11 +41,13 @@ def get_by_id(
 
 
 @router.post("", response_model=EstablishmentRead, status_code=HTTPStatus.CREATED)
-def create_establishment(
+async def create_establishment(
     establishment_create: EstablishmentCreate,
     establishment_service: EstablishmentServiceDep,
 ):
-    establishment = establishment_service.create_establishment(establishment_create)
+    establishment = await establishment_service.create_establishment(
+        establishment_create, establishment_create.address
+    )
     return establishment
 
 

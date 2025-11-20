@@ -6,6 +6,7 @@ from app.core.utils.models import update_model_from_schema
 from app.modules.establishment.repository import EstablishmentRepository
 from app.modules.establishment.exceptions import EstablishmentNotFoundError
 from app.modules.establishment.schemas import EstablishmentCreate, EstablishmentUpdate
+from app.modules.maps.service import GeolocatorService
 
 
 class EstablishmentService:
@@ -23,10 +24,21 @@ class EstablishmentService:
 
         return establishment
 
-    def create_establishment(
-        self, establishment_create: EstablishmentCreate
+    async def create_establishment(
+        self,
+        establishment_create: EstablishmentCreate,
+        address: str,
     ) -> Establishment:
+        geolocator = GeolocatorService()
+        location = geolocator.get_location_from_address(address)
+
+        if location is None:
+            raise EstablishmentNotFoundError
+
         establishment = Establishment(**establishment_create.model_dump())
+        establishment.address = address
+        establishment.latitude = location.latitude
+        establishment.longitude = location.longitude
         establishment = self.repo.create_establishment(establishment)
 
         self.repo.session.commit()

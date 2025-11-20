@@ -13,6 +13,7 @@ class Dish(Base):
     name: Mapped[str] = mapped_column(String, nullable=False)
     description: Mapped[str] = mapped_column(String, nullable=True)
     price: Mapped[float] = mapped_column(Float, nullable=False)
+    image: Mapped[str] = mapped_column(String, nullable=True)
 
     establishment_id: Mapped[int] = mapped_column(
         ForeignKey("establishments.id"), nullable=False

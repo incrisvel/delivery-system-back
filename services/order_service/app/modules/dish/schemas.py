@@ -7,6 +7,7 @@ class DishRead(BaseModel):
     name: str
     description: Optional[str] = None
     price: float
+    image: Optional[str] = None
     establishment_id: int
 
 
@@ -14,6 +15,7 @@ class DishCreate(BaseModel):
     name: str
     description: Optional[str] = None
     price: float
+    image: Optional[str] = None
     establishment_id: int
 
 
@@ -21,4 +23,5 @@ class DishUpdate(BaseModel):
     name: Optional[str] = None
     description: Optional[str] = None
     price: Optional[float] = None
+    image: Optional[str] = None
     establishment_id: Optional[int] = None
