@@ -1,5 +1,5 @@
 from typing import Optional, Sequence
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.core.db.models.establishment import Establishment
@@ -10,15 +10,39 @@ class EstablishmentRepository:
         self.session = session
 
     def get_all_establishments(
-        self, name: Optional[str] = None
-    ) -> Sequence[Establishment]:
+        self,
+        name: Optional[str] = None,
+        user_lat: Optional[float] = None,
+        user_lon: Optional[float] = None,
+        radius_m: Optional[int] = None,
+    ):
+        R = 6371000
+
         stmt = select(Establishment)
 
-        if name is not None:
+        if user_lat is not None and user_lon is not None and radius_m is not None:
+
+            distance = R * func.acos(
+                func.cos(func.radians(user_lat))
+                * func.cos(func.radians(Establishment.latitude))
+                * func.cos(func.radians(Establishment.longitude) - func.radians(user_lon))
+                + func.sin(func.radians(user_lat))
+                * func.sin(func.radians(Establishment.latitude))
+            )
+
+            stmt = stmt.add_columns(distance.label("distance"))
+            stmt = stmt.where(distance <= radius_m)
+            stmt = stmt.order_by(distance)
+
+        if name:
             stmt = stmt.where(Establishment.name.ilike(f"%{name}%"))
 
-        establishments = self.session.execute(stmt).scalars().all()
+        results = self.session.execute(stmt).all()
+
+        establishments = [row[0] for row in results]
+
         return establishments
+
 
     def get_establishment_by_id(self, establishment_id: int) -> Establishment | None:
         stmt = select(Establishment).where(Establishment.id == establishment_id)

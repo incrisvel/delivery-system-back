@@ -13,8 +13,16 @@ class EstablishmentService:
     def __init__(self, repo: EstablishmentRepository) -> None:
         self.repo = repo
 
-    def get_all_establishments(self, name: Optional[str] = None) -> List[Establishment]:
-        establishments = self.repo.get_all_establishments(name)
+    def get_all_establishments(
+        self,
+        name: Optional[str] = None,
+        user_lat: Optional[float] = None,
+        user_lon: Optional[float] = None,
+        radius_m: Optional[int] = None,
+    ) -> List[Establishment]:
+        establishments = self.repo.get_all_establishments(
+            name, user_lat, user_lon, radius_m
+        )
         return list(establishments)
 
     def get_establishment_by_id(self, establishment_id: int) -> Establishment:
