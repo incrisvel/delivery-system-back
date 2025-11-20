@@ -3,7 +3,7 @@ import uuid
 import threading
 
 from .processor import Processor
-from .simple_order import SimpleOrder
+from .simple_order import SimpleDelivery
 from ...shared.connection_manager import ConnectionManager
 
 
@@ -34,7 +34,7 @@ class DeliveryService:
         )
 
         self.channel_consumer.basic_consume(queue="delivery_queue",
-                                            on_message_callback=self.processor.process_order_created,
+                                            on_message_callback=self.process_order_created,
                                             auto_ack=False)
 
     def __producer_setup(self):
@@ -42,6 +42,26 @@ class DeliveryService:
         self.order_exchange = self.connection.create_exchange(
             self.channel_producer, "order_exchange", "topic"
         )
+
+    def process_order_created(self, ch, method, properties, body):
+        #print(body, properties)
+        if properties.headers.get("service_id") == self.id:
+            return
+
+        if properties.content_type != "application/json":
+            print(f"[Delivery {self.id}] Tipo de conteúdo inválido: {properties.content_type}")
+            return
+
+        order = self.processor.process_new_order(body)
+
+        ch.basic_ack(delivery_tag=method.delivery_tag)
+
+        self.publish_order_update(order)
+
+    def publish_order_update(self, order):
+        self.publish(
+            key="order.{order.status}",
+            body=order)
 
     def publish(self, key, body):
         self.channel_producer.basic_publish(
@@ -71,7 +91,7 @@ class DeliveryService:
 
                     self.publish(
                         key="order.created",
-                        body=SimpleOrder.create_random()
+                        body=SimpleDelivery.create_random()
                     )
 
         except KeyboardInterrupt:
