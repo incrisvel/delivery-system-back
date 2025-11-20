@@ -1,16 +1,31 @@
-from typing import Sequence
+from typing import Optional, Sequence
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.core.db.models.order import Order
+from app.core.db.models.order import Order, OrderStatus
 
 
 class OrderRepository:
     def __init__(self, session: Session) -> None:
         self.session = session
 
-    def get_all_orders(self) -> Sequence[Order]:
+    def get_all_orders(
+        self,
+        establishment_id: Optional[int] = None,
+        delivery_id: Optional[int] = None,
+        status: Optional[OrderStatus] = None,
+    ) -> Sequence[Order]:
         stmt = select(Order)
+
+        if establishment_id is not None:
+            stmt = stmt.where(Order.establishment_id == establishment_id)
+
+        if delivery_id is not None:
+            stmt = stmt.where(Order.delivery_id == delivery_id)
+
+        if status is not None:
+            stmt = stmt.where(Order.status == status)
+
         orders = self.session.execute(stmt).scalars().all()
         return orders
 

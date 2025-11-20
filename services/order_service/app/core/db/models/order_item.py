@@ -3,8 +3,8 @@ from sqlalchemy.orm import Mapped, mapped_column
 from app.core.db.base import Base
 
 
-class OrderDish(Base):
-    __tablename__ = "order_dishes"
+class OrderItem(Base):
+    __tablename__ = "order_items"
 
     order_id: Mapped[int] = mapped_column(ForeignKey("orders.id"), primary_key=True, nullable=False)
     dish_id: Mapped[int] = mapped_column(ForeignKey("dishes.id"), primary_key=True, nullable=False)

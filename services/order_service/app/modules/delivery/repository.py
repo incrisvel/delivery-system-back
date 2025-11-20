@@ -20,19 +20,19 @@ class DeliveryRepository:
         stmt = select(Delivery)
 
         if origin_latitude is not None:
-            stmt = stmt.where(Delivery.origin_latitude ==)
+            stmt = stmt.where(Delivery.origin_latitude == origin_latitude)
 
         if origin_longitude is not None:
-            pass
+            stmt = stmt.where(Delivery.origin_longitude == origin_longitude)
 
         if destination_latitude is not None:
-            pass
+            stmt = stmt.where(Delivery.destination_latitude == destination_latitude)
 
         if destination_longitude is not None:
-            pass
+            stmt = stmt.where(Delivery.destination_longitude == destination_longitude)
 
         if courier is not None:
-            pass
+            stmt = stmt.where(Delivery.courier == courier)
 
         deliveries = self.session.execute(stmt).scalars().all()
         return deliveries

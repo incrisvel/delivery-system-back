@@ -12,7 +12,7 @@ class EstablishmentService:
     def __init__(self, repo: EstablishmentRepository) -> None:
         self.repo = repo
 
-    def get_all_establishments(self, name: Optional[ str ] = name) -> List[Establishment]:
+    def get_all_establishments(self, name: Optional[str] = None) -> List[Establishment]:
         establishments = self.repo.get_all_establishments(name)
         return list(establishments)
 

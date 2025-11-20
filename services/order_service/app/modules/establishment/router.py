@@ -21,8 +21,11 @@ EstablishmentServiceDep = Annotated[
 
 
 @router.get("", response_model=List[EstablishmentRead], status_code=HTTPStatus.OK)
-def get_all(establishment_service: EstablishmentServiceDep):
-    establishments = establishment_service.get_all_establishments()
+def get_all(
+    establishment_service: EstablishmentServiceDep,
+    name: Optional[str] = Query(None),
+):
+    establishments = establishment_service.get_all_establishments(name)
     return establishments
 
 
@@ -32,9 +35,8 @@ def get_all(establishment_service: EstablishmentServiceDep):
 def get_by_id(
     establishment_id: int,
     establishment_service: EstablishmentServiceDep,
-    name: Optional[str] = Query(None),
 ):
-    establishment = establishment_service.get_establishment_by_id(establishment_id, name)
+    establishment = establishment_service.get_establishment_by_id(establishment_id)
     return establishment
 
 
