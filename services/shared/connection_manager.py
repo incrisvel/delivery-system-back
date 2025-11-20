@@ -43,3 +43,15 @@ class ConnectionManager:
                     routing_key=routing_key
                     )
         return queue
+
+    def define_publish_properties(self, properties: Dict[str, Any]):
+        props = properties.copy()
+
+        content_type = props.pop("content_type", "application/json")
+        delivery_mode = props.pop("delivery_mode", pika.DeliveryMode.Persistent)
+
+        return pika.BasicProperties(
+            content_type=content_type,
+            delivery_mode=delivery_mode,
+            **props
+        )
