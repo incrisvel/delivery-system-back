@@ -1,7 +1,7 @@
 from typing import Optional
 from random import randint, choice
 from enum import Enum
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pydantic import BaseModel
 
 class OrderStatus(str, Enum):
@@ -33,11 +33,11 @@ class SimpleOrder(BaseModel):
 
     def change_status(self, new_status: OrderStatus):
         self.status = new_status
-        self.updated_at = datetime.now()
+        self.updated_at = datetime.now(timezone.utc)
 
     def calculate_estimated_arrival(self):
-        estimated_minutes = randint(5, 90)
-        self.estimated_arrival_at = datetime.now() + timedelta(minutes=estimated_minutes)
+        estimated_minutes = randint(1, 5)
+        self.estimated_arrival_at = datetime.now(timezone.utc) + timedelta(minutes=estimated_minutes)
 
     def to_json(self):
         return self.model_dump_json()
