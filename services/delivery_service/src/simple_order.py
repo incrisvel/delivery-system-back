@@ -16,7 +16,7 @@ class SimpleOrder(BaseModel):
     order: int
     created_at: datetime
     updated_at: datetime
-    estimated_arrival_at: datetime
+    estimated_arrival_at: Optional[datetime] = None
     delivery: Optional[int] = None
     courier: Optional[str] = None
     status: OrderStatus

@@ -1,17 +1,19 @@
-import json
 import uuid
 import threading
+from queue import Queue
+from datetime import datetime, timezone
 
 from .processor import Processor
-from .simple_order import SimpleDelivery
+from .simple_order import SimpleOrder, OrderStatus
 from ...shared.connection_manager import ConnectionManager
 
 
 class DeliveryService:
     def __init__(self):
         self.id = str(uuid.uuid4())[:4]
+        self.producer_queue = Queue()
 
-        self.processor = Processor(id)
+        self.processor = Processor(self.id, self.on_status_change)
         self.connection = ConnectionManager()
 
         self.__components_setup()
@@ -45,8 +47,8 @@ class DeliveryService:
 
     def process_order_created(self, ch, method, properties, body):
         #print(body, properties)
-        if properties.headers.get("service_id") == self.id:
-            return
+        # if properties.headers.get("service_id") == self.id:
+        #     return
 
         if properties.content_type != "application/json":
             print(f"[Delivery {self.id}] Tipo de conteúdo inválido: {properties.content_type}")
@@ -56,30 +58,47 @@ class DeliveryService:
 
         ch.basic_ack(delivery_tag=method.delivery_tag)
 
-        self.publish_order_update(order)
+        self.producer_queue.put(order)
 
     def publish_order_update(self, order):
         self.publish(
             key="order.{order.status}",
-            body=order)
+            body=order.model_dump_json()
+            )
 
     def publish(self, key, body):
         self.channel_producer.basic_publish(
             exchange="order_exchange",
             routing_key=key,
-            body=body.model_dump_json(),
+            body=body,
             properties=self.connection.define_publish_properties({
                 "headers": {"service_id": self.id}
             })
         )
 
-    def listen(self):
+    def on_status_change(self, order):
+        self.producer_queue.put(order)
+
+    def produce(self):
+        while True:
+            order = self.producer_queue.get()
+
+            if order is None:
+                break
+
+            self.publish_order_update(order)
+            self.producer_queue.task_done()
+
+    def consume(self):
         print(f"[Delivery {self.id}] Aguardando atualizações...")
         self.channel_consumer.start_consuming()
 
     def run(self):
-        consumer_thread = threading.Thread(target=self.listen, daemon=True)
-        consumer_thread.start()
+        self.consumer_thread = threading.Thread(target=self.consume, daemon=True)
+        self.consumer_thread.start()
+
+        self.producer_thread = threading.Thread(target=self.produce, daemon=True)
+        self.producer_thread.start()
 
         try:
             print(f"[Delivery {self.id}] Pressione 'Ctrl + C' para sair.\n")
@@ -91,7 +110,12 @@ class DeliveryService:
 
                     self.publish(
                         key="order.created",
-                        body=SimpleDelivery.create_random()
+                        body=SimpleOrder(
+                            order=12345,
+                            created_at=datetime.now(timezone.utc),
+                            updated_at=datetime.now(timezone.utc),
+                            status=OrderStatus.CRIADO
+                        ).to_json()
                     )
 
         except KeyboardInterrupt:
@@ -103,7 +127,7 @@ class DeliveryService:
                     lambda: self.channel_consumer.stop_consuming()
                 )
 
-            consumer_thread.join()
+            self.consumer_thread.join()
 
             if self.channel_consumer.connection.is_open:
                 self.channel_consumer.close()
