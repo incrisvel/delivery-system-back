@@ -6,10 +6,19 @@ from app.modules.dish.router import router as dishes
 from app.modules.delivery.router import router as deliveries
 from app.modules.order.router import router as orders
 from app.modules.establishment.router import router as establishments
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
 
 Base.metadata.create_all(bind=engine)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 app.include_router(dishes)
 app.include_router(deliveries)

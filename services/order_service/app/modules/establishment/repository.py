@@ -12,26 +12,26 @@ class EstablishmentRepository:
     def get_all_establishments(
         self,
         name: Optional[str] = None,
-        user_lat: Optional[float] = None,
-        user_lon: Optional[float] = None,
-        radius_m: Optional[int] = None,
+        lat: Optional[float] = None,
+        lon: Optional[float] = None,
+        radius: Optional[int] = None,
     ):
         R = 6371000
 
         stmt = select(Establishment)
 
-        if user_lat is not None and user_lon is not None and radius_m is not None:
+        if lat is not None and lon is not None and radius is not None:
 
             distance = R * func.acos(
-                func.cos(func.radians(user_lat))
+                func.cos(func.radians(lat))
                 * func.cos(func.radians(Establishment.latitude))
-                * func.cos(func.radians(Establishment.longitude) - func.radians(user_lon))
-                + func.sin(func.radians(user_lat))
+                * func.cos(func.radians(Establishment.longitude) - func.radians(lon))
+                + func.sin(func.radians(lat))
                 * func.sin(func.radians(Establishment.latitude))
             )
 
             stmt = stmt.add_columns(distance.label("distance"))
-            stmt = stmt.where(distance <= radius_m)
+            stmt = stmt.where(distance <= radius)
             stmt = stmt.order_by(distance)
 
         if name:

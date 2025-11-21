@@ -24,12 +24,12 @@ EstablishmentServiceDep = Annotated[
 def get_all(
     establishment_service: EstablishmentServiceDep,
     name: Optional[str] = Query(None),
-    user_lat: Optional[float] = Query(None),
-    user_lon: Optional[float] = Query(None),
-    radius_m: Optional[int] = Query(None),
+    lat: Optional[float] = Query(None),
+    lon: Optional[float] = Query(None),
+    radius: Optional[int] = Query(None),
 ):
     establishments = establishment_service.get_all_establishments(
-        name, user_lat, user_lon, radius_m
+        name, lat, lon, radius
     )
     return establishments
 

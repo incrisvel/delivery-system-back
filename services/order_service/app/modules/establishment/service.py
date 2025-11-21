@@ -16,12 +16,12 @@ class EstablishmentService:
     def get_all_establishments(
         self,
         name: Optional[str] = None,
-        user_lat: Optional[float] = None,
-        user_lon: Optional[float] = None,
-        radius_m: Optional[int] = None,
+        lat: Optional[float] = None,
+        lon: Optional[float] = None,
+        radius: Optional[int] = None,
     ) -> List[Establishment]:
         establishments = self.repo.get_all_establishments(
-            name, user_lat, user_lon, radius_m
+            name, lat, lon, radius
         )
         return list(establishments)
 

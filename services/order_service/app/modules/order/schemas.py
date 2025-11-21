@@ -13,6 +13,7 @@ class OrderRead(BaseModel):
     created_at: datetime
     updated_at: datetime
     status: OrderStatus
+    total: float
     establishment_id: int
     delivery_id: Optional[int] = None
 
@@ -20,6 +21,7 @@ class OrderRead(BaseModel):
 class OrderWithItemsCreate(BaseModel):
     client: str
     description: str
+    total: float
     establishment_id: int
     delivery_id: Optional[int] = None
     items: List[OrderItemCreate]
@@ -28,6 +30,7 @@ class OrderWithItemsCreate(BaseModel):
 class OrderCreate(BaseModel):
     client: str
     description: str
+    total: float
     establishment_id: int
     delivery_id: Optional[int] = None
 
@@ -35,6 +38,7 @@ class OrderCreate(BaseModel):
 class OrderUpdate(BaseModel):
     client: Optional[str] = None
     description: Optional[str] = None
+    total: Optional[ float ] = None
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
     status: Optional[OrderStatus] = None
