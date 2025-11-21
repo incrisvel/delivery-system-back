@@ -30,4 +30,4 @@ class NotificationProcessor:
         return notification
 
     def print_status(self, notification):
-        print(f"[Notification {self.service_id}] enviada às {notification.notifcation_time}.")
+        print(f"[Notification {self.service_id}] enviada às {notification.notification_time}.")

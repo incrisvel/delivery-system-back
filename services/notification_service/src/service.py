@@ -97,7 +97,7 @@ class NotificationService:
             print(f"[Notification {self.id}] Pressione 'Ctrl + C' para sair.\n")
 
             while True:
-                    user_input = input()
+                pass
 
         except KeyboardInterrupt:
             print(f"\n[Notification {self.id}] Encerrando.")

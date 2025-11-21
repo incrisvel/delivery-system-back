@@ -16,14 +16,14 @@ class OrderStatus(str, Enum):
 
 class Notification(BaseModel):
     order: int
-    notifcation_time: datetime
+    notification_time: datetime
     status: OrderStatus
 
     def __init__(self, order: SimpleOrder):
         super().__init__(
             order=order.order,
             status=order.status,
-            notifcation_time=datetime.now()
+            notification_time=datetime.now()
         )
 
     def to_json(self):
