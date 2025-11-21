@@ -1,10 +1,10 @@
 from datetime import datetime, timezone
 import json
 
-from .simple_order import SimpleOrder, OrderStatus
+from ...shared.simple_order import SimpleOrder, OrderStatus
 
 
-class Processor:
+class DeliveryProcessor:
     def __init__(self, id, status_callback):
         self.service_id = id
         self.orders = {}

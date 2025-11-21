@@ -4,8 +4,8 @@ import threading
 from queue import Queue
 from datetime import datetime, timezone
 
-from .processor import Processor
-from .simple_order import SimpleOrder, OrderStatus
+from .processor import DeliveryProcessor
+from ...shared.simple_order import SimpleOrder, OrderStatus
 from ...shared.connection_manager import ConnectionManager
 
 
@@ -14,7 +14,7 @@ class DeliveryService:
         self.id = str(uuid.uuid4())[:4]
         self.producer_queue = Queue()
 
-        self.processor = Processor(self.id, self.on_status_change)
+        self.processor = DeliveryProcessor(self.id, self.on_status_change)
         self.connection = ConnectionManager()
 
         self.__components_setup()
