@@ -60,7 +60,7 @@ class DeliveryService:
         ch.basic_ack(delivery_tag=method.delivery_tag)
 
     def publish_order_update(self, order):
-        print(order)
+        # print(order)
         self.publish(
             key=f"order.{order.status.value}",
             body=order.model_dump_json()

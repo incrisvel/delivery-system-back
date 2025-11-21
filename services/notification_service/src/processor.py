@@ -2,6 +2,7 @@
 import json
 import random
 import time
+from zoneinfo import ZoneInfo
 
 from services.shared.notification import Notification
 
@@ -30,4 +31,5 @@ class NotificationProcessor:
         return notification
 
     def print_status(self, notification):
-        print(f"[Notification {self.service_id}] enviada às {notification.notification_time}.")
+        local_time = notification.notification_time.astimezone(ZoneInfo("America/Sao_Paulo"))
+        print(f"[Notification {self.service_id}] enviada às {local_time:%H:%M:%S} UTC-3.")
