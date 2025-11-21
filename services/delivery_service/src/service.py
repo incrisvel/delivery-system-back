@@ -54,15 +54,14 @@ class DeliveryService:
             print(f"[Delivery {self.id}] Tipo de conteúdo inválido: {properties.content_type}")
             return
 
-        order = self.processor.process_new_order(body)
+        self.processor.process_new_order(body)
 
         ch.basic_ack(delivery_tag=method.delivery_tag)
 
-        self.producer_queue.put(order)
-
     def publish_order_update(self, order):
+        print(order)
         self.publish(
-            key="order.{order.status}",
+            key=f"order.{order.status.value}",
             body=order.model_dump_json()
             )
 
@@ -77,7 +76,8 @@ class DeliveryService:
         )
 
     def on_status_change(self, order):
-        self.producer_queue.put(order)
+        order_copy = order.model_copy(deep=True)
+        self.producer_queue.put(order_copy)
 
     def produce(self):
         while True:
