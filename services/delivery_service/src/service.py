@@ -4,6 +4,8 @@ import threading
 from queue import Queue
 from datetime import datetime, timezone
 
+from services.shared.components_enum import Exchanges, Queues
+
 from .processor import DeliveryProcessor
 from ...shared.simple_order import SimpleOrder, OrderStatus
 from ...shared.connection_manager import ConnectionManager
@@ -26,24 +28,24 @@ class DeliveryService:
     def __consumer_setup(self):
         self.channel_consumer = self.connection.create_channel()
         self.order_exchange = self.connection.create_exchange(
-            self.channel_consumer, "order_exchange", "topic"
+            self.channel_consumer, Exchanges.ORDER_EXCHANGE.declaration, Exchanges.ORDER_EXCHANGE.type
         )
         self.delivery_queue = self.connection.create_queue(
             self.channel_consumer,
-            "delivery_queue",
+            Queues.DELIVERY_QUEUE,
             bindings=[
-                {"exchange": "order_exchange", "routing_key": "order.created"}
+                {"exchange": Exchanges.ORDER_EXCHANGE.declaration, "routing_key": "order.created"}
             ]
         )
 
-        self.channel_consumer.basic_consume(queue="delivery_queue",
+        self.channel_consumer.basic_consume(queue=Queues.DELIVERY_QUEUE,
                                             on_message_callback=self.process_order_created,
                                             auto_ack=False)
 
     def __producer_setup(self):
         self.channel_producer = self.connection.create_channel()
         self.order_exchange = self.connection.create_exchange(
-            self.channel_producer, "order_exchange", "topic"
+            self.channel_producer, Exchanges.ORDER_EXCHANGE.declaration, Exchanges.ORDER_EXCHANGE.type
         )
 
     def process_order_created(self, ch, method, properties, body):
@@ -68,7 +70,7 @@ class DeliveryService:
 
     def publish(self, key, body):
         self.channel_producer.basic_publish(
-            exchange="order_exchange",
+            exchange=Exchanges.ORDER_EXCHANGE.declaration,
             routing_key=key,
             body=body,
             properties=self.connection.define_publish_properties({
