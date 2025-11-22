@@ -3,6 +3,7 @@ import threading
 import uuid
 
 from services.notification_service.src.processor import NotificationProcessor
+from services.shared.components_enum import Exchanges, Queues
 from services.shared.notification import Notification
 
 from ...shared.connection_manager import ConnectionManager
@@ -23,31 +24,27 @@ class NotificationService:
         self.__producer_setup()
 
     def __consumer_setup(self):
-        NOTIFCATION_QUEUE = "notification_queue"
-        ORDER_EXCHANGE = "order_exchange"
 
         self.channel_consumer = self.connection.create_channel()
         self.order_exchange = self.connection.create_exchange(
-            self.channel_consumer, ORDER_EXCHANGE, "topic"
+            self.channel_consumer, Exchanges.ORDER_EXCHANGE.declaration, Exchanges.ORDER_EXCHANGE.type
         )
         self.notification_queue = self.connection.create_queue(
             self.channel_consumer,
-            NOTIFCATION_QUEUE,
+            Queues.NOTIFICATION_QUEUE,
             bindings=[
-                {"exchange": ORDER_EXCHANGE, "routing_key": "order.*"}
+                {"exchange": Exchanges.ORDER_EXCHANGE.declaration, "routing_key": "order.*"}
             ]
         )
 
-        self.channel_consumer.basic_consume(queue=NOTIFCATION_QUEUE,
+        self.channel_consumer.basic_consume(queue=Queues.NOTIFICATION_QUEUE,
                                             on_message_callback=self.process_order_event,
                                             auto_ack=False)
 
     def __producer_setup(self):
-        NOTIFICATION_EXCHANGE = "notification_exchange"
-
         self.channel_producer = self.connection.create_channel()
         self.notification_exchange = self.connection.create_exchange(
-            self.channel_producer, NOTIFICATION_EXCHANGE, "fanout"
+            self.channel_producer, Exchanges.NOTIFICATION_EXCHANGE.declaration, Exchanges.NOTIFICATION_EXCHANGE.type
         )
 
     def process_order_event(self, ch, method, properties, body):
@@ -63,7 +60,7 @@ class NotificationService:
     def publish_notification(self, notification):
         # print(notification)
         self.channel_producer.basic_publish(
-            exchange="notification_exchange",
+            exchange=Exchanges.NOTIFICATION_EXCHANGE,
             routing_key="",
             body=notification.model_dump_json(),
             properties=self.connection.create_message_properties(
