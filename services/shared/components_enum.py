@@ -16,14 +16,3 @@ class Exchanges(Enum):
     def __init__(self, declaration, type):
         self.declaration = declaration
         self.type = type
-
-class RoutingKeys(Enum):
-    ORDER_CONFIRMED = "order.confirmed"
-    ORDER_CREATED = "order.created"
-    ORDER_UPDATED = "order.updated"
-    ORDER_DELIVERY_ASSIGNED = "order.delivery.assigned"
-    ORDER_DELIVERY_ENROUTE = "order.delivery.enroute"
-    ORDER_DELIVERY_DELIVERED = "order.delivery.delivered"
-    DELIVERY_RETRY = "delivery.retry"
-    DELIVERY_DLQ = "delivery.dlq"
-
