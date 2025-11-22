@@ -51,6 +51,7 @@ class NotificationService:
         )
 
     def process_order_event(self, ch, method, properties, body):
+        # print(body)
         if properties.content_type != "application/json":
             print(f"[Notification {self.id}] Tipo de conteúdo inválido: {properties.content_type}")
             return
@@ -60,6 +61,7 @@ class NotificationService:
         ch.basic_ack(delivery_tag=method.delivery_tag)
 
     def publish_notification(self, notification):
+        # print(notification)
         self.channel_producer.basic_publish(
             exchange="notification_exchange",
             routing_key="",
@@ -97,7 +99,7 @@ class NotificationService:
             print(f"[Notification {self.id}] Pressione 'Ctrl + C' para sair.\n")
 
             while True:
-                    user_input = input()
+                pass
 
         except KeyboardInterrupt:
             print(f"\n[Notification {self.id}] Encerrando.")

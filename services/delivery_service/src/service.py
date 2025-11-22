@@ -1,3 +1,4 @@
+from random import randint
 import uuid
 import threading
 from queue import Queue
@@ -59,7 +60,7 @@ class DeliveryService:
         ch.basic_ack(delivery_tag=method.delivery_tag)
 
     def publish_order_update(self, order):
-        print(order)
+        # print(order)
         self.publish(
             key=f"order.{order.status.value}",
             body=order.model_dump_json()
@@ -93,12 +94,21 @@ class DeliveryService:
         print(f"[Delivery {self.id}] Aguardando atualizações...")
         self.channel_consumer.start_consuming()
 
+    def check_delivery_time(self):
+        while True:
+            self.processor.check_delivered_orders()
+
+            threading.Event().wait(30)
+
     def run(self):
         self.consumer_thread = threading.Thread(target=self.consume, daemon=True)
         self.consumer_thread.start()
 
         self.producer_thread = threading.Thread(target=self.produce, daemon=True)
         self.producer_thread.start()
+
+        self.time_thread = threading.Thread(target=self.check_delivery_time, daemon=True)
+        self.time_thread.start()
 
         try:
             print(f"[Delivery {self.id}] Pressione 'Ctrl + C' para sair.\n")
@@ -111,7 +121,7 @@ class DeliveryService:
                     self.publish(
                         key="order.created",
                         body=SimpleOrder(
-                            order=12345,
+                            order=randint(0, 9999),
                             created_at=datetime.now(timezone.utc),
                             updated_at=datetime.now(timezone.utc),
                             status=OrderStatus.CRIADO
