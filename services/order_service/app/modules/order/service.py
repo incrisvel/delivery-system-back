@@ -41,7 +41,7 @@ class OrderService:
         order = Order(**order_create.model_dump())
         order = self.repo.create_order(order)
 
-        self.rabbitmq.publish_order_status_changed(SimpleOrder.model_validate(order))
+        self.rabbitmq.publish_order_status_changed(SimpleOrder.model_validate(order, from_attributes=True))
         return order
 
     def update_order(self, order_id: int, order_update: OrderUpdate) -> Order:
@@ -51,7 +51,7 @@ class OrderService:
         order = self.repo.update_order(order)
         self.repo.session.commit()
 
-        self.rabbitmq.publish_order_status_changed(SimpleOrder.model_validate(order))
+        self.rabbitmq.publish_order_status_changed(SimpleOrder.model_validate(order, from_attributes=True))
         return order
 
     def delete_order(self, order_id: int) -> None:

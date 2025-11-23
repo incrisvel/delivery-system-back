@@ -18,6 +18,7 @@ class DeliveryProcessor:
         self.status_callback = status_callback
 
     def process_new_order(self, body):
+        print("AQUI")
         order_json = json.loads(body)
         order_object = SimpleOrder(**order_json)
 

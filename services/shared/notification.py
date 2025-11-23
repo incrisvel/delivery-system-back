@@ -1,3 +1,4 @@
+from __future__ import annotations
 from datetime import datetime
 from pydantic import BaseModel
 
@@ -10,10 +11,13 @@ class Notification(BaseModel):
     status: OrderStatus
     order: SimpleOrder
 
-    def from_order_schema(self, order: SimpleOrder):
-        super().__init__(
+    @staticmethod
+    def from_order_schema(order: SimpleOrder) -> Notification:
+        return Notification(
             order_id=order.id,
             status=order.status,
             timestamp=datetime.now(),
             order=order,
         )
+
+

@@ -80,13 +80,12 @@ class RabbitMQClient:
         self.publish_notification(key, notification)
 
     def publish_order_status_changed(self, order):
-        notification = Notification.from_order_schema(order)
+        notification = Notification.from_order_schema(order=order)
         key = f"order.{order.status}"
         self.publish_notification(key, notification)
 
     def publish_notification(self, key: str, notification: Notification):
-        payload = json.dumps(notification.to_dict())
-
+        payload = notification.model_dump_json()
         self.channel_producer.basic_publish(
             exchange=Exchanges.ORDER_EXCHANGE.declaration,
             routing_key=key,
