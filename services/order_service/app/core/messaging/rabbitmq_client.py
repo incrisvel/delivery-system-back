@@ -35,13 +35,12 @@ class RabbitMQClient:
         self.notification_queue = self.connection.create_queue(
             self.channel_consumer,
             Queues.ORDER_QUEUE,
-            bindings=[{"exchange": Exchanges.NOTIFICATION_EXCHANGE.declaration}],
-        )
-
-        self.channel_consumer.basic_consume(
-            queue=Queues.ORDER_QUEUE,
-            on_message_callback=self.process_notification,
-            auto_ack=False,
+            bindings=[
+                {
+                    "exchange": Exchanges.NOTIFICATION_EXCHANGE.declaration,
+                    "routing_key": ""
+                }
+            ]
         )
 
     def _producer_setup(self):
@@ -76,12 +75,12 @@ class RabbitMQClient:
 
     def publish_delivery_status_changed(self, order):
         notification = Notification.from_order_schema(order)
-        key = f"order.delivery.{order.status}"
+        key = f"order.delivery.{order.status.value}"
         self.publish_notification(key, notification)
 
     def publish_order_status_changed(self, order):
         notification = Notification.from_order_schema(order=order)
-        key = f"order.{order.status}"
+        key = f"order.{order.status.value}"
         self.publish_notification(key, notification)
 
     def publish_notification(self, key: str, notification: Notification):
@@ -94,6 +93,7 @@ class RabbitMQClient:
                 {"headers": {"service_id": self.id}}
             )
         )
+        print("KEY", key)
         print(f"[Order {self.id}] Notificação enviada:", payload)
 
     def produce(self):
