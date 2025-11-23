@@ -1,3 +1,4 @@
+from typing import Optional
 from sqlalchemy import Float, ForeignKey, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -11,9 +12,9 @@ class Dish(Base):
         Integer, primary_key=True, autoincrement=True, nullable=False
     )
     name: Mapped[str] = mapped_column(String, nullable=False)
-    description: Mapped[str] = mapped_column(String, nullable=True)
+    description: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     price: Mapped[float] = mapped_column(Float, nullable=False)
-    image: Mapped[str] = mapped_column(String, nullable=True)
+    image: Mapped[Optional[str]] = mapped_column(String, nullable=True)
 
     establishment_id: Mapped[int] = mapped_column(
         ForeignKey("establishments.id"), nullable=False

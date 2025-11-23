@@ -9,7 +9,7 @@ from app.modules.order_item.schemas import OrderItemCreate
 class OrderRead(BaseModel):
     id: int
     client: str
-    description: str
+    description: Optional[str] = None
     created_at: datetime
     updated_at: datetime
     status: OrderStatus
@@ -20,7 +20,7 @@ class OrderRead(BaseModel):
 
 class OrderWithItemsCreate(BaseModel):
     client: str
-    description: str
+    description: Optional[str] = None
     total: float
     establishment_id: int
     delivery_id: Optional[int] = None
@@ -29,7 +29,7 @@ class OrderWithItemsCreate(BaseModel):
 
 class OrderCreate(BaseModel):
     client: str
-    description: str
+    description: Optional[str] = None
     total: float
     establishment_id: int
     delivery_id: Optional[int] = None
@@ -38,7 +38,7 @@ class OrderCreate(BaseModel):
 class OrderUpdate(BaseModel):
     client: Optional[str] = None
     description: Optional[str] = None
-    total: Optional[ float ] = None
+    total: Optional[float] = None
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
     status: Optional[OrderStatus] = None
