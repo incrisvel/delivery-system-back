@@ -47,6 +47,30 @@ class DeliveryService:
             ],
         )
 
+        self.connection.create_exchange(self.channel_consumer,
+                                        Exchanges.DEAD_LETTER_EXCHANGE.declaration,
+                                        Exchanges.DEAD_LETTER_EXCHANGE.type)
+
+        retry_arguments = {
+            'x-message-ttl': 15000,
+            'x-dead-letter-exchange': Exchanges.ORDER_EXCHANGE.declaration,
+        }
+
+        self.connection.create_queue(
+            self.channel_consumer,
+            Queues.DELIVERY_RETRY_QUEUE,
+            bindings=[
+                {"exchange": Exchanges.ORDER_EXCHANGE.declaration, "routing_key": "delivery.retry"},
+            ],
+            arguments=retry_arguments
+        )
+
+        self.connection.create_queue(
+            self.channel_consumer,
+            Queues.DEAD_LETTER_QUEUE,
+            bindings=[{"exchange": Exchanges.DEAD_LETTER_EXCHANGE.declaration}]
+        )
+
         self.channel_consumer.basic_consume(
             queue=Queues.DELIVERY_QUEUE,
             on_message_callback=self.process_order_created,
