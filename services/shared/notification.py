@@ -1,30 +1,19 @@
-from typing import Optional
-from random import randint, choice
-from enum import Enum
-from datetime import datetime, timedelta
+from datetime import datetime
 from pydantic import BaseModel
 
-from services.shared.simple_order import SimpleOrder
+from services.shared.simple_order import OrderStatus, SimpleOrder
 
-class OrderStatus(str, Enum):
-    CONFIRMADO = "confirmed"
-    CRIADO = "created"
-    ATUALIZADO = "updated"
-    ATRIBUÍDO = "assigned"
-    EM_ENTREGA = "enroute"
-    ENTREGUE = "delivered"
 
 class Notification(BaseModel):
-    order: int
-    notification_time: datetime
+    order_id: int
+    timestamp: datetime
     status: OrderStatus
+    order: SimpleOrder
 
-    def __init__(self, order: SimpleOrder):
+    def from_order_schema(self, order: SimpleOrder):
         super().__init__(
-            order=order.order,
+            order_id=order.id,
             status=order.status,
-            notification_time=datetime.now()
+            timestamp=datetime.now(),
+            order=order,
         )
-
-    def to_json(self):
-        return self.model_dump_json()

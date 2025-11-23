@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 
-from app.core.exceptions.handlers import (
+from services.order_service.app.core.exceptions.handlers import (
     RequestValidationError,
     JSONDecodeError,
     AppException,

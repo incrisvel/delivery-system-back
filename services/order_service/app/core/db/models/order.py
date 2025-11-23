@@ -1,17 +1,39 @@
 from datetime import datetime
-from sqlalchemy import DateTime, Integer
-from sqlalchemy.orm import Mapped, mapped_column
-from app.core.db.base import Base
+from typing import Optional
+from sqlalchemy import Enum as SQLEnum, Float, ForeignKey
+from sqlalchemy import DateTime, Integer, String
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+from services.shared.simple_order import OrderStatus
+from services.order_service.app.core.db.base import Base
 from zoneinfo import ZoneInfo
 
-
 class Order(Base):
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    description: Mapped[str] = mapped_column(String, nullable=True)
+    __tablename__ = "orders"
+    id: Mapped[int] = mapped_column(
+        Integer, primary_key=True, autoincrement=True, nullable=False
+    )
+    client: Mapped[str] = mapped_column(String, nullable=False)
+    description: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
-        DateTime, nullable=False, default=datetime.now(tz=ZoneInfo("UTC"))
+        DateTime(timezone=True),
+        default=lambda: datetime.now(tz=ZoneInfo("UTC")),
+        nullable=False,
     )
     updated_at: Mapped[datetime] = mapped_column(
-        DateTime, nullable=False, default=datetime.now(tz=ZoneInfo("UTC")), onupdate=
+        DateTime(timezone=True),
+        default=lambda: datetime.now(tz=ZoneInfo("UTC")),
+        onupdate=lambda: datetime.now(tz=ZoneInfo("UTC")),
+        nullable=False,
     )
-    status
+    status: Mapped[OrderStatus] = mapped_column(
+        SQLEnum(OrderStatus), nullable=False, default=OrderStatus.CONFIRMED
+    )
+    total: Mapped[float] = mapped_column(Float, nullable=False)
+
+    establishment_id: Mapped[int] = mapped_column(
+        ForeignKey("establishments.id"), nullable=False
+    )
+    delivery_id: Mapped[int] = mapped_column(ForeignKey("deliveries.id"), nullable=True)
+
+    establishment = relationship("Establishment", back_populates="orders")
+    delivery = relationship("Delivery", back_populates="order")
