@@ -10,7 +10,7 @@ class Queues(str, Enum):
 
 class Exchanges(Enum):
     ORDER_EXCHANGE = ("order_exchange", "topic")
-    NOTIFICATION_EXCHANGE = ("notification_exchange", "topic")
+    NOTIFICATION_EXCHANGE = ("notification_exchange", "fanout")
     DEAD_LETTER_EXCHANGE = ("dead_letter_exchange", "direct")
 
     def __init__(self, declaration, type):
