@@ -2,12 +2,12 @@ from typing import Annotated, List, Optional
 from fastapi import APIRouter, Depends, Query
 from http import HTTPStatus
 
-from app.modules.establishment.schemas import (
+from services.order_service.app.modules.establishment.schemas import (
     EstablishmentCreate,
     EstablishmentRead,
     EstablishmentUpdate,
 )
-from app.modules.establishment.service import (
+from services.order_service.app.modules.establishment.service import (
     EstablishmentService,
     get_establishment_service,
 )

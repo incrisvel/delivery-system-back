@@ -1,6 +1,6 @@
 from sqlalchemy import ForeignKey, Integer
 from sqlalchemy.orm import Mapped, mapped_column
-from app.core.db.base import Base
+from services.order_service.app.core.db.base import Base
 
 
 class OrderItem(Base):

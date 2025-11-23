@@ -2,7 +2,7 @@ from typing import Optional, Sequence
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.core.db.models.order import Order, OrderStatus
+from services.order_service.app.core.db.models.order import Order, OrderStatus
 
 
 class OrderRepository:

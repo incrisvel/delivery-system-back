@@ -1,11 +1,11 @@
 from typing import List, Optional
-from app.core.utils.models import update_model_from_schema
+from services.order_service.app.core.utils.models import update_model_from_schema
 from fastapi import Depends
-from app.core.db.models.delivery import Delivery
-from app.core.db.session import get_session
-from app.modules.delivery.exceptions import DeliveryNotFoundError
-from app.modules.delivery.repository import DeliveryRepository
-from app.modules.delivery.schemas import DeliveryCreate, DeliveryUpdate
+from services.order_service.app.core.db.models.delivery import Delivery
+from services.order_service.app.core.db.session import get_session
+from services.order_service.app.modules.delivery.exceptions import DeliveryNotFoundError
+from services.order_service.app.modules.delivery.repository import DeliveryRepository
+from services.order_service.app.modules.delivery.schemas import DeliveryCreate, DeliveryUpdate
 
 
 class DeliveryService:

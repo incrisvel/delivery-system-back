@@ -4,9 +4,8 @@ import uuid
 
 from services.notification_service.src.processor import NotificationProcessor
 from services.shared.components_enum import Exchanges, Queues
-from services.shared.notification import Notification
 
-from ...shared.connection_manager import ConnectionManager
+from services.shared.connection_manager import ConnectionManager
 
 
 class NotificationService:
@@ -17,40 +16,49 @@ class NotificationService:
         self.processor = NotificationProcessor(self.id, self.on_status_change)
         self.connection = ConnectionManager()
 
-        self.__components_setup()
+        self._components_setup()
 
-    def __components_setup(self):
-        self.__consumer_setup()
-        self.__producer_setup()
+    def _components_setup(self):
+        self._consumer_setup()
+        self._producer_setup()
 
-    def __consumer_setup(self):
-
+    def _consumer_setup(self):
         self.channel_consumer = self.connection.create_channel()
         self.order_exchange = self.connection.create_exchange(
-            self.channel_consumer, Exchanges.ORDER_EXCHANGE.declaration, Exchanges.ORDER_EXCHANGE.type
+            self.channel_consumer,
+            Exchanges.ORDER_EXCHANGE.declaration,
+            Exchanges.ORDER_EXCHANGE.type,
         )
         self.notification_queue = self.connection.create_queue(
             self.channel_consumer,
             Queues.NOTIFICATION_QUEUE,
             bindings=[
-                {"exchange": Exchanges.ORDER_EXCHANGE.declaration, "routing_key": "order.*"}
-            ]
+                {
+                    "exchange": Exchanges.ORDER_EXCHANGE.declaration,
+                    "routing_key": "order.*",
+                }
+            ],
         )
 
-        self.channel_consumer.basic_consume(queue=Queues.NOTIFICATION_QUEUE,
-                                            on_message_callback=self.process_order_event,
-                                            auto_ack=False)
+        self.channel_consumer.basic_consume(
+            queue=Queues.NOTIFICATION_QUEUE,
+            on_message_callback=self.process_order_event,
+            auto_ack=False,
+        )
 
-    def __producer_setup(self):
+    def _producer_setup(self):
         self.channel_producer = self.connection.create_channel()
         self.notification_exchange = self.connection.create_exchange(
-            self.channel_producer, Exchanges.NOTIFICATION_EXCHANGE.declaration, Exchanges.NOTIFICATION_EXCHANGE.type
+            self.channel_producer,
+            Exchanges.NOTIFICATION_EXCHANGE.declaration,
+            Exchanges.NOTIFICATION_EXCHANGE.type,
         )
 
     def process_order_event(self, ch, method, properties, body):
-        # print(body)
         if properties.content_type != "application/json":
-            print(f"[Notification {self.id}] Tipo de conteúdo inválido: {properties.content_type}")
+            print(
+                f"[Notification {self.id}] Tipo de conteúdo inválido: {properties.content_type}"
+            )
             return
 
         self.processor.process_notification(body)
@@ -58,15 +66,13 @@ class NotificationService:
         ch.basic_ack(delivery_tag=method.delivery_tag)
 
     def publish_notification(self, notification):
-        # print(notification)
         self.channel_producer.basic_publish(
             exchange=Exchanges.NOTIFICATION_EXCHANGE,
             routing_key="",
             body=notification.model_dump_json(),
             properties=self.connection.create_message_properties(
-                content_type="application/json",
-                headers={"service_id": self.id}
-            )
+                content_type="application/json", headers={"service_id": self.id}
+            ),
         )
 
     def on_status_change(self, notification):
@@ -114,6 +120,7 @@ class NotificationService:
 
             print(f"[Notification {self.id}] Conexão fechada.")
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     svc = NotificationService()
     svc.run()

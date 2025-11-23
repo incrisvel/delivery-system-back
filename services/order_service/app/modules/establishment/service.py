@@ -1,12 +1,12 @@
 from typing import List, Optional
 from fastapi import Depends
-from app.core.db.models.establishment import Establishment
-from app.core.db.session import get_session
-from app.core.utils.models import update_model_from_schema
-from app.modules.establishment.repository import EstablishmentRepository
-from app.modules.establishment.exceptions import EstablishmentNotFoundError
-from app.modules.establishment.schemas import EstablishmentCreate, EstablishmentUpdate
-from app.modules.maps.service import GeolocatorService
+from services.order_service.app.core.db.models.establishment import Establishment
+from services.order_service.app.core.db.session import get_session
+from services.order_service.app.core.utils.models import update_model_from_schema
+from services.order_service.app.modules.establishment.repository import EstablishmentRepository
+from services.order_service.app.modules.establishment.exceptions import EstablishmentNotFoundError
+from services.order_service.app.modules.establishment.schemas import EstablishmentCreate, EstablishmentUpdate
+from services.order_service.app.modules.maps.service import GeolocatorService
 
 
 class EstablishmentService:

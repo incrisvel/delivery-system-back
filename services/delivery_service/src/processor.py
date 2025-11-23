@@ -5,7 +5,7 @@ import time
 from datetime import datetime, timezone
 from zoneinfo import ZoneInfo
 
-from ...shared.simple_order import SimpleOrder, OrderStatus
+from services.shared.simple_order import SimpleOrder, OrderStatus
 
 
 class DeliveryProcessor:
@@ -19,13 +19,14 @@ class DeliveryProcessor:
 
     def process_new_order(self, body):
         order_json = json.loads(body)
-        # print(body)
         order_object = SimpleOrder(**order_json)
 
         time.sleep(random.uniform(self.MIN_PROCESSING_TIME, self.MAX_PROCESSING_TIME))
 
         if self.orders.get(order_object.order) is not None:
-            print(f"[Delivery {self.service_id}] Pedido {order_object.order} já foi processado.")
+            print(
+                f"[Delivery {self.service_id}] Pedido {order_object.order} já foi processado."
+            )
             return
 
         order = self.generate_delivery_id(order_object)
@@ -63,18 +64,31 @@ class DeliveryProcessor:
 
     def print_status(self, order):
         local_sent_time = order.updated_at.astimezone(ZoneInfo("America/Sao_Paulo"))
-        print(f"[Delivery {self.service_id}] {order.courier} saiu para a entrega do pedido {order.order} às {local_sent_time:%H:%M:%S} UTC-3.")
+        print(
+            f"[Delivery {self.service_id}] {order.courier} saiu para a entrega do pedido {order.order} às {local_sent_time:%H:%M:%S} UTC-3."
+        )
 
-        local_arrival_time = order.estimated_arrival_at.astimezone(ZoneInfo("America/Sao_Paulo"))
-        print(f"[Delivery {self.service_id}] O pedido {order.order} chegará às {local_arrival_time:%H:%M:%S} UTC-3.")
+        local_arrival_time = order.estimated_arrival_at.astimezone(
+            ZoneInfo("America/Sao_Paulo")
+        )
+        print(
+            f"[Delivery {self.service_id}] O pedido {order.order} chegará às {local_arrival_time:%H:%M:%S} UTC-3."
+        )
 
     def check_delivered_orders(self):
         for order in list(self.orders.values()):
-                if order.status == OrderStatus.ENROUTE and order.estimated_arrival_at is not None:
-                    if datetime.now(timezone.utc) >= order.estimated_arrival_at:
-                        order.change_status(OrderStatus.DELIVERED)
+            if (
+                order.status != OrderStatus.ENROUTE
+                or order.estimated_arrival_at is None
+            ):
+                continue
 
-                        print(f"[Delivery {self.service_id}] O pedido {order.order} foi entregue por {order.courier}.")
-                        self.status_callback(order)
+            if datetime.now(timezone.utc) >= order.estimated_arrival_at:
+                order.change_status(OrderStatus.DELIVERED)
 
-                        self.orders.pop(order.order, None)
+                print(
+                    f"[Delivery {self.service_id}] O pedido {order.order} foi entregue por {order.courier}."
+                )
+                self.status_callback(order)
+
+                self.orders.pop(order.order, None)

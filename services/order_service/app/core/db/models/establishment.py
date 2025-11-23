@@ -1,7 +1,7 @@
 from typing import Optional
 from sqlalchemy import Float, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from app.core.db.base import Base
+from services.order_service.app.core.db.base import Base
 
 
 class Establishment(Base):

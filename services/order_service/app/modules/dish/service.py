@@ -1,11 +1,11 @@
 from typing import List, Optional
-from app.core.utils.models import update_model_from_schema
-from app.core.db.models.dish import Dish
-from app.modules.dish.exceptions import DishNotFoundError
-from app.modules.dish.repository import DishRepository
+from services.order_service.app.core.utils.models import update_model_from_schema
+from services.order_service.app.core.db.models.dish import Dish
+from services.order_service.app.modules.dish.exceptions import DishNotFoundError
+from services.order_service.app.modules.dish.repository import DishRepository
 from fastapi import Depends
-from app.core.db.session import get_session
-from app.modules.dish.schemas import DishCreate, DishUpdate
+from services.order_service.app.core.db.session import get_session
+from services.order_service.app.modules.dish.schemas import DishCreate, DishUpdate
 
 
 class DishService:

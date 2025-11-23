@@ -1,4 +1,4 @@
-from app.core.exceptions.base import ForbiddenError, NotFoundError, ValidationError
+from services.order_service.app.core.exceptions.base import ForbiddenError, NotFoundError, ValidationError
 
 
 class DeliveryNotFoundError(NotFoundError):

@@ -1,7 +1,7 @@
 import openrouteservice as ors
 from geopy.geocoders import Nominatim
 from geopy.distance import geodesic
-from app.core.config.settings import settings
+from services.order_service.app.core.config.settings import settings
 
 
 class Coordinate:

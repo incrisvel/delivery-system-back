@@ -1,17 +1,23 @@
 from typing import List, Optional
 from fastapi import Depends
-from app.core.db.models.order import Order, OrderStatus
-from app.core.db.models.order_item import OrderItem
-from app.core.db.session import get_session
-from app.core.utils.models import update_model_from_schema
-from app.modules.order.exceptions import OrderNotFoundError
-from app.modules.order.repository import OrderRepository
-from app.modules.order.schemas import OrderCreate, OrderWithItemsCreate, OrderUpdate
+from services.order_service.app.core.db.models.order import Order, OrderStatus
+from services.order_service.app.core.db.session import get_session
+from services.order_service.app.core.utils.models import update_model_from_schema
+from services.order_service.app.dependencies.rabbitmq import get_rabbitmq_client
+from services.order_service.app.modules.order.exceptions import OrderNotFoundError
+from services.order_service.app.modules.order.repository import OrderRepository
+from services.order_service.app.modules.order.schemas import (
+    OrderCreate,
+    OrderWithItemsCreate,
+    OrderUpdate,
+)
+from services.shared.simple_order import SimpleOrder
 
 
 class OrderService:
-    def __init__(self, repo: OrderRepository) -> None:
+    def __init__(self, repo: OrderRepository, rabbitmq) -> None:
         self.repo = repo
+        self.rabbitmq = rabbitmq
 
     def get_all_orders(
         self,
@@ -35,6 +41,7 @@ class OrderService:
         order = Order(**order_create.model_dump())
         order = self.repo.create_order(order)
 
+        self.rabbitmq.publish_order_status_changed(SimpleOrder.model_validate(order))
         return order
 
     def update_order(self, order_id: int, order_update: OrderUpdate) -> Order:
@@ -42,9 +49,9 @@ class OrderService:
 
         update_model_from_schema(order, order_update)
         order = self.repo.update_order(order)
-
         self.repo.session.commit()
 
+        self.rabbitmq.publish_order_status_changed(SimpleOrder.model_validate(order))
         return order
 
     def delete_order(self, order_id: int) -> None:
@@ -53,6 +60,9 @@ class OrderService:
         return
 
 
-def get_order_service(session=Depends(get_session)) -> OrderService:
+def get_order_service(
+    session = Depends(get_session),
+    rabbitmq = Depends(get_rabbitmq_client),
+) -> OrderService:
     repo = OrderRepository(session)
-    return OrderService(repo)
+    return OrderService(repo, rabbitmq)

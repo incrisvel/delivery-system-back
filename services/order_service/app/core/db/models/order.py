@@ -3,9 +3,9 @@ from typing import Optional
 from sqlalchemy import Enum as SQLEnum, Float, ForeignKey
 from sqlalchemy import DateTime, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from app.core.db.base import Base
-from zoneinfo import ZoneInfo
 from services.shared.simple_order import OrderStatus
+from services.order_service.app.core.db.base import Base
+from zoneinfo import ZoneInfo
 
 class Order(Base):
     __tablename__ = "orders"

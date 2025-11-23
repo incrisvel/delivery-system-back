@@ -2,7 +2,7 @@ from typing import Optional, Sequence
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app.core.db.models.establishment import Establishment
+from services.order_service.app.core.db.models.establishment import Establishment
 
 
 class EstablishmentRepository:

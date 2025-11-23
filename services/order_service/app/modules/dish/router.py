@@ -2,8 +2,8 @@ from http import HTTPStatus
 from typing import Annotated, List, Optional
 from fastapi import APIRouter, Depends, Query
 
-from app.modules.dish.schemas import DishCreate, DishRead, DishUpdate
-from app.modules.dish.service import DishService, get_dish_service
+from services.order_service.app.modules.dish.schemas import DishCreate, DishRead, DishUpdate
+from services.order_service.app.modules.dish.service import DishService, get_dish_service
 
 
 router = APIRouter(prefix="/dishes", tags=["Dishes"])

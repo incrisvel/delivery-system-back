@@ -1,8 +1,8 @@
 from typing import Annotated, List, Optional
 from fastapi import APIRouter, Depends, Query
 
-from app.modules.delivery.schemas import DeliveryCreate, DeliveryRead, DeliveryUpdate
-from app.modules.delivery.service import DeliveryService, get_delivery_service
+from services.order_service.app.modules.delivery.schemas import DeliveryCreate, DeliveryRead, DeliveryUpdate
+from services.order_service.app.modules.delivery.service import DeliveryService, get_delivery_service
 from http import HTTPStatus
 
 router = APIRouter(prefix="/deliveries", tags=["Delivery"])

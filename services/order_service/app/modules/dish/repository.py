@@ -1,7 +1,7 @@
 from typing import Optional, Sequence
 from sqlalchemy import select
 from sqlalchemy.orm import Session
-from app.core.db.models.dish import Dish
+from services.order_service.app.core.db.models.dish import Dish
 
 
 class DishRepository:

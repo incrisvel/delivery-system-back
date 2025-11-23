@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 
-from app.core.db.models.order_item import OrderItem
+from services.order_service.app.core.db.models.order_item import OrderItem
 
 
 class OrderItemRepository:

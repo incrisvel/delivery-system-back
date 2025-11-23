@@ -1,10 +1,10 @@
 from typing import List
 from fastapi import Depends
-from app.core.db.models.order import Order
-from app.core.db.models.order_item import OrderItem
-from app.core.db.session import get_session
-from app.modules.order_item.repository import OrderItemRepository
-from app.modules.order_item.schemas import OrderItemCreate
+from services.order_service.app.core.db.models.order import Order
+from services.order_service.app.core.db.models.order_item import OrderItem
+from services.order_service.app.core.db.session import get_session
+from services.order_service.app.modules.order_item.repository import OrderItemRepository
+from services.order_service.app.modules.order_item.schemas import OrderItemCreate
 
 
 class OrderItemService:
