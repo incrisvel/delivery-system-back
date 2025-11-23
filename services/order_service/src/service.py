@@ -33,7 +33,7 @@ class OrderService:
             self.channel_consumer,
             Queues.ORDER_QUEUE,
             bindings=[
-                {"exchange": Exchanges.NOTIFICATION_EXCHANGE.declaration, "routing_key": ""}
+                {"exchange": Exchanges.NOTIFICATION_EXCHANGE.declaration}
             ]
         )
 
