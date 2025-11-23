@@ -20,9 +20,23 @@ cd delivery-system-back
     - Preencher com valores reais para as variáveis
 
 4. Rodar serviços
-    - `python -m services.order_service.src.service`
     - `python -m services.delivery_service.src.service`
     - `python -m services.notification_service.src.service`
 
-5. Outras tarefas
+5. Rodar duas instâncias da API OrderService
+    - No Linux:
+    ```bash
+    PORT=8000 uvicorn services.order_service.app.main:app --port 8000
+    PORT=8001 uvicorn services.order_service.app.main:app --port 8001
+    ```
+    - No Windows:
+    ```Shell
+    $env:PORT = "8000"
+    uvicorn services.order_service.app.main:app --port 8000
+
+    $env:PORT = "8001"
+    uvicorn services.order_service.app.main:app --port 8001
+    ```
+
+7. Outras tarefas
     - Rodar `python scripts/tasks.py help` para ver comandos disponíveis

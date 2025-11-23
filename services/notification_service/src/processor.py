@@ -19,7 +19,7 @@ class NotificationProcessor:
 
     def process_notification(self, body):
         order_json = json.loads(body)
-        order_object = SimpleOrder(**order_json)
+        order_object = SimpleOrder(**order_json["order"])
 
         time.sleep(random.uniform(self.MIN_PROCESSING_TIME, self.MAX_PROCESSING_TIME))
 
@@ -30,7 +30,7 @@ class NotificationProcessor:
         return notification
 
     def print_status(self, notification):
-        local_time = notification.notification_time.astimezone(
+        local_time = notification.timestamp.astimezone(
             ZoneInfo("America/Sao_Paulo")
         )
         print(

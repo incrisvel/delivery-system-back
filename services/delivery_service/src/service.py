@@ -43,8 +43,10 @@ class DeliveryService:
                     "exchange": Exchanges.ORDER_EXCHANGE.declaration,
                     "routing_key": "order.created",
                 },
-                {"exchange": Exchanges.NOTIFICATION_EXCHANGE.declaration},
-            ],
+                {
+                    "exchange": Exchanges.NOTIFICATION_EXCHANGE.declaration,
+                    "routing_key": ""},
+            ]
         )
 
         self.connection.create_exchange(self.channel_consumer,

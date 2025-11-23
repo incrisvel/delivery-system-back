@@ -67,7 +67,7 @@ class NotificationService:
 
     def publish_notification(self, notification):
         self.channel_producer.basic_publish(
-            exchange=Exchanges.NOTIFICATION_EXCHANGE,
+            exchange=Exchanges.NOTIFICATION_EXCHANGE.declaration,
             routing_key="",
             body=notification.model_dump_json(),
             properties=self.connection.create_message_properties(
