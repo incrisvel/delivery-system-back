@@ -35,13 +35,13 @@ class ConnectionManager:
         if bindings:
             for binding in bindings:
                 exchange = binding.get("exchange")
-                if exchange:
-                    routing_key = binding.get("routing_key")
-                    channel.queue_bind(
-                    exchange=exchange,
-                    queue=queue_name,
-                    routing_key=routing_key
-                    )
+                if not exchange:
+                    continue
+                routing_key = binding.get("routing_key", None)
+                if routing_key is None:
+                    channel.queue_bind(exchange=exchange, queue=queue_name)
+                else:
+                    channel.queue_bind(exchange=exchange, queue=queue_name, routing_key=routing_key)
         return queue
 
     def define_publish_properties(self, properties: Dict[str, Any]):

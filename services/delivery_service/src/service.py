@@ -27,20 +27,27 @@ class DeliveryService:
 
     def __consumer_setup(self):
         self.channel_consumer = self.connection.create_channel()
-        self.order_exchange = self.connection.create_exchange(
-            self.channel_consumer, Exchanges.ORDER_EXCHANGE.declaration, Exchanges.ORDER_EXCHANGE.type
-        )
+        self.connection.create_exchange(self.channel_consumer,
+                                        Exchanges.ORDER_EXCHANGE.declaration,
+                                        Exchanges.ORDER_EXCHANGE.type)
+        self.connection.create_exchange(self.channel_consumer,
+                                        Exchanges.NOTIFICATION_EXCHANGE.declaration,
+                                        Exchanges.NOTIFICATION_EXCHANGE.type)
+
         self.delivery_queue = self.connection.create_queue(
             self.channel_consumer,
             Queues.DELIVERY_QUEUE,
             bindings=[
-                {"exchange": Exchanges.ORDER_EXCHANGE.declaration, "routing_key": "order.created"}
+                {"exchange": Exchanges.ORDER_EXCHANGE.declaration, "routing_key": "order.created"},
+                {"exchange": Exchanges.NOTIFICATION_EXCHANGE.declaration}
             ]
         )
 
-        self.channel_consumer.basic_consume(queue=Queues.DELIVERY_QUEUE,
-                                            on_message_callback=self.process_order_created,
-                                            auto_ack=False)
+        self.channel_consumer.basic_consume(
+            queue=Queues.DELIVERY_QUEUE,
+            on_message_callback=self.process_order_created,
+            auto_ack=False
+        )
 
     def __producer_setup(self):
         self.channel_producer = self.connection.create_channel()
@@ -116,19 +123,7 @@ class DeliveryService:
             print(f"[Delivery {self.id}] Pressione 'Ctrl + C' para sair.\n")
 
             while True:
-                user_input = input()
-
-                if user_input.lower() == 'p': # Teste manual
-
-                    self.publish(
-                        key="order.created",
-                        body=SimpleOrder(
-                            order=randint(0, 9999),
-                            created_at=datetime.now(timezone.utc),
-                            updated_at=datetime.now(timezone.utc),
-                            status=OrderStatus.CRIADO
-                        ).to_json()
-                    )
+                pass
 
         except KeyboardInterrupt:
             print(f"\n[Delivery {self.id}] Encerrando.")
