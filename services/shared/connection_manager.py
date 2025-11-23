@@ -30,8 +30,8 @@ class ConnectionManager:
         )
         return exchange
 
-    def create_queue(self, channel, queue_name, bindings: Dict[str, Any] = None):
-        queue = channel.queue_declare(queue=queue_name, durable=True).method.queue
+    def create_queue(self, channel, queue_name, bindings: Dict[str, Any] = None, arguments: Dict[str, Any] = None):
+        queue = channel.queue_declare(queue=queue_name, durable=True, arguments=arguments).method.queue
         if bindings:
             for binding in bindings:
                 exchange = binding.get("exchange")

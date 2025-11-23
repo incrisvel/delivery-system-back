@@ -5,24 +5,24 @@ from datetime import datetime, timedelta, timezone
 from pydantic import BaseModel
 
 class OrderStatus(str, Enum):
-    CONFIRMADO = "confirmed"
-    CRIADO = "created"
-    ATUALIZADO = "updated"
-    ATRIBUÍDO = "assigned"
-    EM_ENTREGA = "enroute"
-    ENTREGUE = "delivered"
+    CONFIRMED = "confirmed"
+    CREATED = "created"
+    UPDATED = "updated"
+    ASSIGNED = "assigned"
+    ENROUTE = "enroute"
+    DELIVERED = "delivered"
 
 class SimpleOrder(BaseModel):
-    order: int
+    id: int
     created_at: datetime
     updated_at: datetime
     estimated_arrival_at: Optional[datetime] = None
-    delivery: Optional[int] = None
+    delivery_id: Optional[int] = None
     courier: Optional[str] = None
     status: OrderStatus
 
     def generate_delivery_id(self):
-        if self.delivery is None:
+        if self.delivery_id is None:
             self.delivery = randint(0, 99999)
 
     def assign_random_courier(self):
@@ -38,6 +38,3 @@ class SimpleOrder(BaseModel):
     def calculate_estimated_arrival(self):
         estimated_minutes = randint(1, 5)
         self.estimated_arrival_at = datetime.now(timezone.utc) + timedelta(minutes=estimated_minutes)
-
-    def to_json(self):
-        return self.model_dump_json()

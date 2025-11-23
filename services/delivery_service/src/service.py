@@ -1,14 +1,11 @@
-from random import randint
 import uuid
 import threading
 from queue import Queue
-from datetime import datetime, timezone
 
 from services.shared.components_enum import Exchanges, Queues
 
 from .processor import DeliveryProcessor
-from ...shared.simple_order import SimpleOrder, OrderStatus
-from ...shared.connection_manager import ConnectionManager
+from services.shared.connection_manager import ConnectionManager
 
 
 class DeliveryService:
@@ -19,49 +16,80 @@ class DeliveryService:
         self.processor = DeliveryProcessor(self.id, self.on_status_change)
         self.connection = ConnectionManager()
 
-        self.__components_setup()
+        self._components_setup()
 
-    def __components_setup(self):
-        self.__consumer_setup()
-        self.__producer_setup()
+    def _components_setup(self):
+        self._consumer_setup()
+        self._producer_setup()
 
-    def __consumer_setup(self):
+    def _consumer_setup(self):
         self.channel_consumer = self.connection.create_channel()
-        self.connection.create_exchange(self.channel_consumer,
-                                        Exchanges.ORDER_EXCHANGE.declaration,
-                                        Exchanges.ORDER_EXCHANGE.type)
-        self.connection.create_exchange(self.channel_consumer,
-                                        Exchanges.NOTIFICATION_EXCHANGE.declaration,
-                                        Exchanges.NOTIFICATION_EXCHANGE.type)
+        self.connection.create_exchange(
+            self.channel_consumer,
+            Exchanges.ORDER_EXCHANGE.declaration,
+            Exchanges.ORDER_EXCHANGE.type,
+        )
+        self.connection.create_exchange(
+            self.channel_consumer,
+            Exchanges.NOTIFICATION_EXCHANGE.declaration,
+            Exchanges.NOTIFICATION_EXCHANGE.type,
+        )
 
         self.delivery_queue = self.connection.create_queue(
             self.channel_consumer,
             Queues.DELIVERY_QUEUE,
             bindings=[
-                {"exchange": Exchanges.ORDER_EXCHANGE.declaration, "routing_key": "order.created"},
-                {"exchange": Exchanges.NOTIFICATION_EXCHANGE.declaration}
-            ]
+                {
+                    "exchange": Exchanges.ORDER_EXCHANGE.declaration,
+                    "routing_key": "order.created",
+                },
+                {"exchange": Exchanges.NOTIFICATION_EXCHANGE.declaration},
+            ],
+        )
+
+        self.connection.create_exchange(self.channel_consumer,
+                                        Exchanges.DEAD_LETTER_EXCHANGE.declaration,
+                                        Exchanges.DEAD_LETTER_EXCHANGE.type)
+
+        retry_arguments = {
+            'x-message-ttl': 15000,
+            'x-dead-letter-exchange': Exchanges.ORDER_EXCHANGE.declaration,
+        }
+
+        self.connection.create_queue(
+            self.channel_consumer,
+            Queues.DELIVERY_RETRY_QUEUE,
+            bindings=[
+                {"exchange": Exchanges.ORDER_EXCHANGE.declaration, "routing_key": "delivery.retry"},
+            ],
+            arguments=retry_arguments
+        )
+
+        self.connection.create_queue(
+            self.channel_consumer,
+            Queues.DEAD_LETTER_QUEUE,
+            bindings=[{"exchange": Exchanges.DEAD_LETTER_EXCHANGE.declaration}]
         )
 
         self.channel_consumer.basic_consume(
             queue=Queues.DELIVERY_QUEUE,
             on_message_callback=self.process_order_created,
-            auto_ack=False
+            auto_ack=False,
         )
 
-    def __producer_setup(self):
+    def _producer_setup(self):
         self.channel_producer = self.connection.create_channel()
         self.order_exchange = self.connection.create_exchange(
-            self.channel_producer, Exchanges.ORDER_EXCHANGE.declaration, Exchanges.ORDER_EXCHANGE.type
+            self.channel_producer,
+            Exchanges.ORDER_EXCHANGE.declaration,
+            Exchanges.ORDER_EXCHANGE.type,
         )
 
     def process_order_created(self, ch, method, properties, body):
-        #print(body, properties)
-        # if properties.headers.get("service_id") == self.id:
-        #     return
-
         if properties.content_type != "application/json":
-            print(f"[Delivery {self.id}] Tipo de conteúdo inválido: {properties.content_type}")
+            print(
+                f"[Delivery {self.id}] Tipo de conteúdo inválido: {properties.content_type}"
+            )
             return
 
         self.processor.process_new_order(body)
@@ -69,20 +97,16 @@ class DeliveryService:
         ch.basic_ack(delivery_tag=method.delivery_tag)
 
     def publish_order_update(self, order):
-        # print(order)
-        self.publish(
-            key=f"order.{order.status.value}",
-            body=order.model_dump_json()
-            )
+        self.publish(key=f"order.delivery.{order.status.value}", body=order.model_dump_json())
 
     def publish(self, key, body):
         self.channel_producer.basic_publish(
             exchange=Exchanges.ORDER_EXCHANGE.declaration,
             routing_key=key,
             body=body,
-            properties=self.connection.define_publish_properties({
-                "headers": {"service_id": self.id}
-            })
+            properties=self.connection.define_publish_properties(
+                {"headers": {"service_id": self.id}}
+            ),
         )
 
     def on_status_change(self, order):
@@ -116,7 +140,9 @@ class DeliveryService:
         self.producer_thread = threading.Thread(target=self.produce, daemon=True)
         self.producer_thread.start()
 
-        self.time_thread = threading.Thread(target=self.check_delivery_time, daemon=True)
+        self.time_thread = threading.Thread(
+            target=self.check_delivery_time, daemon=True
+        )
         self.time_thread.start()
 
         try:
@@ -141,6 +167,7 @@ class DeliveryService:
 
             print(f"[Delivery {self.id}] Conexão fechada.")
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     svc = DeliveryService()
     svc.run()
