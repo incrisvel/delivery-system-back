@@ -2,8 +2,8 @@ from datetime import datetime
 from typing import List, Optional
 from pydantic import BaseModel
 
-from app.core.db.models.order import OrderStatus
 from app.modules.order_item.schemas import OrderItemCreate
+from services.shared.simple_order import OrderStatus
 
 
 class OrderRead(BaseModel):

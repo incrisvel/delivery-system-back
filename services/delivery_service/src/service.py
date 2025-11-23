@@ -1,13 +1,10 @@
-from random import randint
 import uuid
 import threading
 from queue import Queue
-from datetime import datetime, timezone
 
 from services.shared.components_enum import Exchanges, Queues
 
 from .processor import DeliveryProcessor
-from ...shared.simple_order import SimpleOrder, OrderStatus
 from ...shared.connection_manager import ConnectionManager
 
 

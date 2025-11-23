@@ -1,21 +1,11 @@
 from datetime import datetime
-from enum import Enum
 from typing import Optional
 from sqlalchemy import Enum as SQLEnum, Float, ForeignKey
 from sqlalchemy import DateTime, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.core.db.base import Base
 from zoneinfo import ZoneInfo
-
-
-class OrderStatus(str, Enum):
-    CONFIRMED = "cofirmed"
-    CREATED = "created"
-    UPDATED = "updated"
-    ASSIGNED = "assigned"
-    ENROUTE = "enroute"
-    DELIVERED = "delivered"
-
+from services.shared.simple_order import OrderStatus
 
 class Order(Base):
     __tablename__ = "orders"

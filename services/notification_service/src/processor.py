@@ -6,7 +6,7 @@ from zoneinfo import ZoneInfo
 
 from services.shared.notification import Notification
 
-from ...shared.simple_order import SimpleOrder, OrderStatus
+from ...shared.simple_order import SimpleOrder
 
 
 class NotificationProcessor:

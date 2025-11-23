@@ -4,15 +4,8 @@ from enum import Enum
 from datetime import datetime, timedelta
 from pydantic import BaseModel
 
-from services.shared.simple_order import SimpleOrder
+from services.shared.simple_order import OrderStatus, SimpleOrder
 
-class OrderStatus(str, Enum):
-    CONFIRMADO = "confirmed"
-    CRIADO = "created"
-    ATUALIZADO = "updated"
-    ATRIBUÍDO = "assigned"
-    EM_ENTREGA = "enroute"
-    ENTREGUE = "delivered"
 
 class Notification(BaseModel):
     order: int
@@ -21,9 +14,7 @@ class Notification(BaseModel):
 
     def __init__(self, order: SimpleOrder):
         super().__init__(
-            order=order.order,
-            status=order.status,
-            notification_time=datetime.now()
+            order=order.order, status=order.status, notification_time=datetime.now()
         )
 
     def to_json(self):

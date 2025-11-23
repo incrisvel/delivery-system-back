@@ -45,19 +45,19 @@ class DeliveryProcessor:
 
     def generate_delivery_id(self, order):
         order.generate_delivery_id()
-        order.change_status(OrderStatus.ATUALIZADO)
+        order.change_status(OrderStatus.UPDATED)
 
         return order
 
     def assign_courier(self, order):
         order.assign_random_courier()
-        order.change_status(OrderStatus.ATRIBUÍDO)
+        order.change_status(OrderStatus.ASSIGNED)
 
         return order
 
     def calculate_estimated_arrival(self, order):
         order.calculate_estimated_arrival()
-        order.change_status(OrderStatus.EM_ENTREGA)
+        order.change_status(OrderStatus.ENROUTE)
 
         return order
 
@@ -70,9 +70,9 @@ class DeliveryProcessor:
 
     def check_delivered_orders(self):
         for order in list(self.orders.values()):
-                if order.status == OrderStatus.EM_ENTREGA and order.estimated_arrival_at is not None:
+                if order.status == OrderStatus.ENROUTE and order.estimated_arrival_at is not None:
                     if datetime.now(timezone.utc) >= order.estimated_arrival_at:
-                        order.change_status(OrderStatus.ENTREGUE)
+                        order.change_status(OrderStatus.DELIVERED)
 
                         print(f"[Delivery {self.service_id}] O pedido {order.order} foi entregue por {order.courier}.")
                         self.status_callback(order)

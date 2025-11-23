@@ -5,12 +5,12 @@ from datetime import datetime, timedelta, timezone
 from pydantic import BaseModel
 
 class OrderStatus(str, Enum):
-    CONFIRMADO = "confirmed"
-    CRIADO = "created"
-    ATUALIZADO = "updated"
-    ATRIBUÍDO = "assigned"
-    EM_ENTREGA = "enroute"
-    ENTREGUE = "delivered"
+    CONFIRMED = "confirmed"
+    CREATED = "created"
+    UPDATED = "updated"
+    ASSIGNED = "assigned"
+    ENROUTE = "enroute"
+    DELIVERED = "delivered"
 
 class SimpleOrder(BaseModel):
     order: int
