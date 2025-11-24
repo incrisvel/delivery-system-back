@@ -19,18 +19,24 @@ class DeliveryProcessor:
 
     def process_new_order(self, body):
         order_json = json.loads(body)
-        print("JSON", order_json)
+        # print("JSON", order_json)
 
         data = order_json.get("order", order_json)
         order = SimpleOrder(**data)
 
         time.sleep(random.uniform(self.MIN_PROCESSING_TIME, self.MAX_PROCESSING_TIME))
 
-        if self.orders.get(order.id) is not None:
-            # print(
-            #     f"[Delivery {self.service_id}] Pedido {order.id} já foi processado."
-            # )
+        print("STATUS", order.status)
+        # Só processa o pedido UMA VEZ
+        if order.status != OrderStatus.CONFIRMED:
             return
+
+        # Se já está no map, ignora
+        if order.id in self.orders:
+            return
+
+        self.orders[order.id] = None
+
 
         order = self.assign_courier(order)
         self.status_callback(order)
