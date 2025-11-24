@@ -15,8 +15,8 @@ class DeliveryProcessor:
 
     def __init__(self, id, status_callback):
         self.service_id = id
-        self.orders = {}             # order_id -> SimpleOrder ou None (em processamento)
-        self.orders_lock = Lock()    # Proteção contra concorrência
+        self.orders = {}
+        self.orders_lock = Lock()
         self.status_callback = status_callback
 
     def process_new_order(self, body):
@@ -25,21 +25,14 @@ class DeliveryProcessor:
         data = order_json.get("order", order_json)
         order = SimpleOrder(**data)
 
-        # Simula tempo de processamento inicial randomizado
         time.sleep(random.uniform(self.MIN_PROCESSING_TIME, self.MAX_PROCESSING_TIME))
 
-        # ---- BLOCO CRÍTICO (THREAD-SAFE) ----
         with self.orders_lock:
             if order.id in self.orders:
-                # Já está sendo processado ou já foi processado
                 return
 
-            # Marca o pedido como "em processamento"
-            # (usar None evita sobrescrita do estado final)
             self.orders[order.id] = None
-        # ---- FIM BLOCO CRÍTICO ----
 
-        # Agora temos garantia de processamento exclusivo deste order.id
         order = self.assign_courier(order)
         self.status_callback(order)
 
@@ -50,18 +43,13 @@ class DeliveryProcessor:
 
         time.sleep(5)
 
-        # ---- BLOCO CRÍTICO (ATUALIZA ESTADO FINAL) ----
         with self.orders_lock:
             self.orders[order.id] = order
-        # ---- FIM BLOCO CRÍTICO ----
 
         self.print_status(order)
 
         return order
 
-    # ----------------------------
-    # Métodos internos
-    # ----------------------------
 
     def generate_delivery_id(self, order):
         order.generate_delivery_id()
@@ -79,7 +67,6 @@ class DeliveryProcessor:
         return order
 
     def print_status(self, order):
-        local_sent_time = order.updated_at.astimezone(ZoneInfo("America/Sao_Paulo"))
         print(
             f"[spring_green3][Delivery {self.service_id}][/spring_green3] {datetime.now().strftime('%H:%M:%S')} - [Pedido {order.id}] {order.courier} saiu para a entrega do pedido"
         )
@@ -92,11 +79,8 @@ class DeliveryProcessor:
         )
 
     def check_delivered_orders(self):
-        # ---- BLOCO CRÍTICO ----
         with self.orders_lock:
-            # Copiamos para evitar erro ao remover durante iteração
             orders_copy = list(self.orders.values())
-        # ---- FIM BLOCO CRÍTICO ----
 
         for order in orders_copy:
             if not order:
@@ -116,8 +100,6 @@ class DeliveryProcessor:
                 )
                 self.status_callback(order)
 
-                # ---- REMOVE THREAD-SAFE ----
                 with self.orders_lock:
                     self.orders.pop(order.id, None)
-                # -----------------------------
 
