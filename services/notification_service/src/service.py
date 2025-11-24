@@ -1,7 +1,7 @@
 from queue import Queue
 import threading
 import uuid
-
+from rich import print
 from services.notification_service.src.processor import NotificationProcessor
 from services.shared.components_enum import Exchanges, Queues
 
@@ -24,18 +24,20 @@ class NotificationService:
 
     def _consumer_setup(self):
         self.channel_consumer = self.connection.create_channel()
+
         self.order_exchange = self.connection.create_exchange(
             self.channel_consumer,
             Exchanges.ORDER_EXCHANGE.declaration,
             Exchanges.ORDER_EXCHANGE.type,
         )
+
         self.notification_queue = self.connection.create_queue(
             self.channel_consumer,
             Queues.NOTIFICATION_QUEUE,
             bindings=[
                 {
                     "exchange": Exchanges.ORDER_EXCHANGE.declaration,
-                    "routing_key": "order.*",
+                    "routing_key": "order.#",
                 }
             ],
         )
@@ -57,7 +59,7 @@ class NotificationService:
     def process_order_event(self, ch, method, properties, body):
         if properties.content_type != "application/json":
             print(
-                f"[Notification {self.id}] Tipo de conteúdo inválido: {properties.content_type}"
+                f"[spring_green3][Notification {self.id}][/spring_green3] Tipo de conteúdo inválido: {properties.content_type}"
             )
             return
 
@@ -72,7 +74,7 @@ class NotificationService:
             body=notification.model_dump_json(),
             properties=self.connection.define_publish_properties(
                 {"headers": {"service_id": self.id}}
-            )
+            ),
         )
 
     def on_status_change(self, notification):
@@ -90,7 +92,7 @@ class NotificationService:
             self.producer_queue.task_done()
 
     def consume(self):
-        print(f"[Notification {self.id}] Aguardando eventos de pedidos...")
+        print(f"[spring_green3][Notification {self.id}][/spring_green3] Aguardando eventos de pedidos...")
         self.channel_consumer.start_consuming()
 
     def run(self):
@@ -101,13 +103,13 @@ class NotificationService:
         self.producer_thread.start()
 
         try:
-            print(f"[Notification {self.id}] Pressione 'Ctrl + C' para sair.\n")
+            print(f"[spring_green3][Notification {self.id}][/spring_green3] Pressione 'Ctrl + C' para sair.\n")
 
             while True:
                 pass
 
         except KeyboardInterrupt:
-            print(f"\n[Notification {self.id}] Encerrando.")
+            print(f"\n[spring_green3][Notification {self.id}][/spring_green3] Encerrando.")
 
         finally:
             if self.channel_consumer.is_open:
@@ -120,7 +122,7 @@ class NotificationService:
             if self.channel_consumer.connection.is_open:
                 self.channel_consumer.close()
 
-            print(f"[Notification {self.id}] Conexão fechada.")
+            print(f"[spring_green3][Notification {self.id}][/spring_green3] Conexão fechada.")
 
 
 if __name__ == "__main__":

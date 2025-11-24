@@ -1,7 +1,9 @@
 from queue import Queue
+from rich import print
 import threading
 import uuid
 import json
+from datetime import datetime
 
 from services.order_service.app.core.utils.models import update_model_from_schema
 from services.order_service.app.core.db.session import get_session
@@ -69,20 +71,28 @@ class RabbitMQClient:
         session = next(get_session())
         try:
             if properties.content_type != "application/json":
-                print(f"[Order {self.id}] Tipo inválido: {properties.content_type}")
+                print(
+                    f"[spring_green3][Order {self.id}][/spring_green3] {datetime.now().strftime('%H:%M:%S')} Tipo inválido: {properties.content_type}"
+                )
                 ch.basic_ack(delivery_tag=method.delivery_tag)
                 return
 
             notification = Notification(**json.loads(body))
 
-            print(f"[Order {self.id}] Recebido:", notification)
+            print(
+                f"[spring_green3][Order {self.id}][/spring_green3] {datetime.now().strftime('%H:%M:%S')} - [Pedido {notification.order.id}] Atualização de status recebida: [cyan2]{notification.order.status.value}[/cyan2]",
+                f"{f'- Entregador: {notification.order.courier}' if notification.status == OrderStatus.ASSIGNED else ''}",
+            )
 
             if notification.order.status == OrderStatus.ASSIGNED:
                 self._assign_delivery_courier(notification.order, session)
 
             self._update_order_status(notification.order, session)
         except Exception as e:
-            print(f"[Order {self.id}] ERRO:", e)
+            print(
+                f"[spring_green3][Order {self.id}][/spring_green3] {datetime.now().strftime('%H:%M:%S')} ERRO:",
+                e,
+            )
 
         finally:
             ch.basic_ack(delivery_tag=method.delivery_tag)
@@ -99,7 +109,6 @@ class RabbitMQClient:
         delivery = delivery_repo.get_delivery_by_id(order.delivery_id)
         delivery.courier = order.courier
         delivery_repo.session.flush()
-
 
     def publish_delivery_status_changed(self, order):
         notification = Notification.from_order_schema(order)
@@ -121,7 +130,9 @@ class RabbitMQClient:
                 {"headers": {"service_id": self.id}}
             ),
         )
-        print(f"[Order {self.id}] Notificação enviada:", payload)
+        print(
+            f"[spring_green3][Order {self.id}][/spring_green3] {datetime.now().strftime('%H:%M:%S')} Notificação enviada: {payload}\n"
+        )
 
     def produce(self):
         while self.running:
@@ -133,11 +144,15 @@ class RabbitMQClient:
                 pass
 
     def consume(self):
-        print(f"[Order {self.id}] Aguardando notificações...")
+        print(
+            f"[spring_green3][Order {self.id}][/spring_green3] {datetime.now().strftime('%H:%M:%S')} Aguardando notificações..."
+        )
         try:
             self.channel_consumer.start_consuming()
         except Exception as e:
-            print("Erro no consumidor:", e)
+            print(
+                f"[spring_green3][Order {self.id}][/spring_green3] {datetime.now().strftime('%H:%M:%S')} Erro no consumidor: {e}"
+            )
 
     def run(self):
         self.running = True
@@ -159,4 +174,6 @@ class RabbitMQClient:
         self.channel_consumer.close()
         self.channel_producer.close()
 
-        print(f"[Order {self.id}] Conexões encerradas.")
+        print(
+            f"[spring_green3][Order {self.id}][/spring_green3] {datetime.now().strftime('%H:%M:%S')} Conexões encerradas."
+        )

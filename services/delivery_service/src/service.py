@@ -1,8 +1,9 @@
 import uuid
 import threading
 from queue import Queue
-
+from rich import print
 from services.shared.components_enum import Exchanges, Queues
+from services.shared.notification import Notification
 
 from .processor import DeliveryProcessor
 from services.shared.connection_manager import ConnectionManager
@@ -24,30 +25,11 @@ class DeliveryService:
 
     def _consumer_setup(self):
         self.channel_consumer = self.connection.create_channel()
+
         self.connection.create_exchange(
             self.channel_consumer,
             Exchanges.ORDER_EXCHANGE.declaration,
             Exchanges.ORDER_EXCHANGE.type,
-        )
-        self.connection.create_exchange(
-            self.channel_consumer,
-            Exchanges.NOTIFICATION_EXCHANGE.declaration,
-            Exchanges.NOTIFICATION_EXCHANGE.type,
-        )
-
-        self.delivery_queue = self.connection.create_queue(
-            self.channel_consumer,
-            Queues.DELIVERY_QUEUE,
-            bindings=[
-                {
-                    "exchange": Exchanges.ORDER_EXCHANGE.declaration,
-                    "routing_key": "order.confirmed",
-                },
-                {
-                    "exchange": Exchanges.NOTIFICATION_EXCHANGE.declaration,
-                    "routing_key": "",
-                },
-            ],
         )
 
         self.connection.create_exchange(
@@ -56,9 +38,31 @@ class DeliveryService:
             Exchanges.DEAD_LETTER_EXCHANGE.type,
         )
 
+        delivery_arguments = {
+            "x-dead-letter-exchange": Exchanges.DEAD_LETTER_EXCHANGE.declaration,
+            "x-dead-letter-routing-key": "delivery.retry",
+        }
+
+        self.delivery_queue = self.connection.create_queue(
+            self.channel_consumer,
+            Queues.DELIVERY_QUEUE,
+            bindings=[
+                {
+                    "exchange": Exchanges.ORDER_EXCHANGE.declaration,
+                    "routing_key": "order.created",
+                },
+                {
+                    "exchange": Exchanges.DEAD_LETTER_EXCHANGE.declaration,
+                    "routing_key": "delivery.process",
+                },
+            ],
+            arguments=delivery_arguments,
+        )
+
         retry_arguments = {
             "x-message-ttl": 15000,
-            "x-dead-letter-exchange": Exchanges.ORDER_EXCHANGE.declaration,
+            "x-dead-letter-exchange": Exchanges.DEAD_LETTER_EXCHANGE.declaration,
+            "x-dead-letter-routing-key": "delivery.process",
         }
 
         self.connection.create_queue(
@@ -66,9 +70,9 @@ class DeliveryService:
             Queues.DELIVERY_RETRY_QUEUE,
             bindings=[
                 {
-                    "exchange": Exchanges.ORDER_EXCHANGE.declaration,
+                    "exchange": Exchanges.DEAD_LETTER_EXCHANGE.declaration,
                     "routing_key": "delivery.retry",
-                },
+                }
             ],
             arguments=retry_arguments,
         )
@@ -76,7 +80,12 @@ class DeliveryService:
         self.connection.create_queue(
             self.channel_consumer,
             Queues.DEAD_LETTER_QUEUE,
-            bindings=[{"exchange": Exchanges.DEAD_LETTER_EXCHANGE.declaration}],
+            bindings=[
+                {
+                    "exchange": Exchanges.DEAD_LETTER_EXCHANGE.declaration,
+                    "routing_key": "delivery.dead",
+                }
+            ],
         )
 
         self.channel_consumer.basic_consume(
@@ -96,7 +105,7 @@ class DeliveryService:
     def process_order_created(self, ch, method, properties, body):
         if properties.content_type != "application/json":
             print(
-                f"[Delivery {self.id}] Tipo de conteúdo inválido: {properties.content_type}"
+                f"[spring_green3][Delivery {self.id}][/spring_green3] Tipo de conteúdo inválido: {properties.content_type}"
             )
             return
 
@@ -105,13 +114,16 @@ class DeliveryService:
         ch.basic_ack(delivery_tag=method.delivery_tag)
 
     def publish_order_update(self, order):
-        self.publish(key=f"order.{order.status.value}", body=order.model_dump_json())
+        notification = Notification.from_order_schema(order)
+        key = f"order.delivery.{order.status.value}"
+        self.publish_notification(key, notification)
 
-    def publish(self, key, body):
+    def publish_notification(self, key, notification: Notification):
+        payload = notification.model_dump_json()
         self.channel_producer.basic_publish(
             exchange=Exchanges.ORDER_EXCHANGE.declaration,
             routing_key=key,
-            body=body,
+            body=payload,
             properties=self.connection.define_publish_properties(
                 {"headers": {"service_id": self.id}}
             ),
@@ -132,7 +144,7 @@ class DeliveryService:
             self.producer_queue.task_done()
 
     def consume(self):
-        print(f"[Delivery {self.id}] Aguardando atualizações...")
+        print(f"[spring_green3][Delivery {self.id}][/spring_green3] Aguardando atualizações...")
         self.channel_consumer.start_consuming()
 
     def check_delivery_time(self):
@@ -154,13 +166,13 @@ class DeliveryService:
         self.time_thread.start()
 
         try:
-            print(f"[Delivery {self.id}] Pressione 'Ctrl + C' para sair.\n")
+            print(f"[spring_green3][Delivery {self.id}][/spring_green3] Pressione 'Ctrl + C' para sair.\n")
 
             while True:
                 pass
 
         except KeyboardInterrupt:
-            print(f"\n[Delivery {self.id}] Encerrando.")
+            print(f"\n[spring_green3][Delivery {self.id}][/spring_green3] Encerrando.")
 
         finally:
             if self.channel_consumer.is_open:
@@ -173,7 +185,7 @@ class DeliveryService:
             if self.channel_consumer.connection.is_open:
                 self.channel_consumer.close()
 
-            print(f"[Delivery {self.id}] Conexão fechada.")
+            print(f"[spring_green3][Delivery {self.id}][/spring_green3] Conexão fechada.")
 
 
 if __name__ == "__main__":
