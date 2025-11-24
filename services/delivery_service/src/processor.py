@@ -81,14 +81,14 @@ class DeliveryProcessor:
     def print_status(self, order):
         local_sent_time = order.updated_at.astimezone(ZoneInfo("America/Sao_Paulo"))
         print(
-            f"[spring_green3][Delivery {self.service_id}][/spring_green3] {order.courier} saiu para a entrega do pedido {order.id} às {local_sent_time:%H:%M:%S} UTC-3."
+            f"[spring_green3][Delivery {self.service_id}][/spring_green3] {datetime.now().strftime('%H:%M:%S')} - [Pedido {order.id}] {order.courier} saiu para a entrega do pedido"
         )
 
         local_arrival_time = order.estimated_arrival_at.astimezone(
             ZoneInfo("America/Sao_Paulo")
         )
         print(
-            f"[spring_green3][Delivery {self.service_id}][/spring_green3] O pedido {order.id} chegará às {local_arrival_time:%H:%M:%S} UTC-3."
+            f"[spring_green3][Delivery {self.service_id}][/spring_green3] {datetime.now().strftime('%H:%M:%S')} - [Pedido {order.id}] Horário de entrega estimado: {local_arrival_time:%H:%M:%S}"
         )
 
     def check_delivered_orders(self):
@@ -112,7 +112,7 @@ class DeliveryProcessor:
                 order.change_status(OrderStatus.DELIVERED)
 
                 print(
-                    f"[spring_green3][Delivery {self.service_id}][/spring_green3] O pedido {order.id} foi entregue por {order.courier}."
+                    f"[spring_green3][Delivery {self.service_id}][/spring_green3] {datetime.now().strftime('%H:%M:%S')} - [Pedido {order.id}] Pedido entregue"
                 )
                 self.status_callback(order)
 

@@ -80,8 +80,8 @@ class RabbitMQClient:
             notification = Notification(**json.loads(body))
 
             print(
-                f"[spring_green3][Order {self.id}][/spring_green3] {datetime.now().strftime('%H:%M:%S')} - [Pedido {notification.order.id}] Atualização de status recebida: [cyan2]{notification.order.status.value}[/cyan2]",
-                f"{f'- Entregador: {notification.order.courier}' if notification.status == OrderStatus.ASSIGNED else ''}",
+                f"[spring_green3][Order {self.id}][/spring_green3] {datetime.now().strftime('%H:%M:%S')} - [Pedido {notification.order.id}] Atualização de status recebida: [cyan2]{notification.order.status.value}[/cyan2].",
+                f"{f'Entregador: {notification.order.courier}' if notification.status == OrderStatus.ASSIGNED else ''}",
             )
 
             if notification.order.status == OrderStatus.ASSIGNED:
@@ -131,7 +131,7 @@ class RabbitMQClient:
             ),
         )
         print(
-            f"[spring_green3][Order {self.id}][/spring_green3] {datetime.now().strftime('%H:%M:%S')} Notificação enviada: {payload}\n"
+            f"[spring_green3][Order {self.id}][/spring_green3] {datetime.now().strftime('%H:%M:%S')} - [Pedido {notification.order.id}] Pedido criado e enviado para delivery"
         )
 
     def produce(self):

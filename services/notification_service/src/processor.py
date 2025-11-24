@@ -1,8 +1,6 @@
 import json
 from rich import print
-import random
-import time
-from zoneinfo import ZoneInfo
+from datetime import datetime
 
 from services.shared.notification import Notification
 
@@ -30,9 +28,6 @@ class NotificationProcessor:
         return notification
 
     def print_status(self, notification):
-        local_time = notification.timestamp.astimezone(
-            ZoneInfo("America/Sao_Paulo")
-        )
         print(
-            f"[spring_green3][Notification {self.service_id}][/spring_green3] - Notificação enviada às {local_time:%H:%M:%S} GMT-3"
+            f"[spring_green3][Notification {self.service_id}][/spring_green3] {datetime.now().strftime('%H:%M:%S')} - [Pedido {notification.order.id}] Notificação enviada"
         )

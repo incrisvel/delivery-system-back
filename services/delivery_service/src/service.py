@@ -1,4 +1,5 @@
 import uuid
+from datetime import datetime
 import threading
 from queue import Queue
 from rich import print
@@ -105,7 +106,7 @@ class DeliveryService:
     def process_order_created(self, ch, method, properties, body):
         if properties.content_type != "application/json":
             print(
-                f"[spring_green3][Delivery {self.id}][/spring_green3] Tipo de conteúdo inválido: {properties.content_type}"
+                f"[spring_green3][Delivery {self.id}][/spring_green3] {datetime.now().strftime('%H:%M:%S')} Tipo de conteúdo inválido: {properties.content_type}"
             )
             return
 
@@ -144,7 +145,7 @@ class DeliveryService:
             self.producer_queue.task_done()
 
     def consume(self):
-        print(f"[spring_green3][Delivery {self.id}][/spring_green3] Aguardando atualizações...")
+        print(f"[spring_green3][Delivery {self.id}][/spring_green3] {datetime.now().strftime('%H:%M:%S')} Aguardando atualizações...")
         self.channel_consumer.start_consuming()
 
     def check_delivery_time(self):
@@ -166,13 +167,13 @@ class DeliveryService:
         self.time_thread.start()
 
         try:
-            print(f"[spring_green3][Delivery {self.id}][/spring_green3] Pressione 'Ctrl + C' para sair.\n")
+            print(f"[spring_green3][Delivery {self.id}][/spring_green3] {datetime.now().strftime('%H:%M:%S')} Pressione 'Ctrl + C' para sair.\n")
 
             while True:
                 pass
 
         except KeyboardInterrupt:
-            print(f"\n[spring_green3][Delivery {self.id}][/spring_green3] Encerrando.")
+            print(f"\n[spring_green3][Delivery {self.id}][/spring_green3] {datetime.now().strftime('%H:%M:%S')} Encerrando.")
 
         finally:
             if self.channel_consumer.is_open:
@@ -185,7 +186,7 @@ class DeliveryService:
             if self.channel_consumer.connection.is_open:
                 self.channel_consumer.close()
 
-            print(f"[spring_green3][Delivery {self.id}][/spring_green3] Conexão fechada.")
+            print(f"[spring_green3][Delivery {self.id}][/spring_green3] {datetime.now().strftime('%H:%M:%S')} Conexão fechada.")
 
 
 if __name__ == "__main__":
