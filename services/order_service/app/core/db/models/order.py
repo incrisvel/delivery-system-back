@@ -26,7 +26,7 @@ class Order(Base):
         nullable=False,
     )
     status: Mapped[OrderStatus] = mapped_column(
-        SQLEnum(OrderStatus), nullable=False, default=OrderStatus.CONFIRMED
+        SQLEnum(OrderStatus), nullable=False, default=OrderStatus.CREATED
     )
     total: Mapped[float] = mapped_column(Float, nullable=False)
 

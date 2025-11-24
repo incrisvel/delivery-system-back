@@ -25,6 +25,8 @@ class OrderWithItemsCreate(BaseModel):
     establishment_id: int
     delivery_id: Optional[int] = None
     items: List[OrderItemCreate]
+    client_lat: float
+    client_long: float
 
 
 class OrderCreate(BaseModel):

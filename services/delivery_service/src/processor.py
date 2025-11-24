@@ -1,7 +1,8 @@
 import json
 import random
 import time
-
+from rich import print
+from threading import Lock
 from datetime import datetime, timezone
 from zoneinfo import ZoneInfo
 
@@ -15,69 +16,76 @@ class DeliveryProcessor:
     def __init__(self, id, status_callback):
         self.service_id = id
         self.orders = {}
+        self.orders_lock = Lock()
         self.status_callback = status_callback
 
     def process_new_order(self, body):
-        print("AQUI")
         order_json = json.loads(body)
-        order_object = SimpleOrder(**order_json)
+
+        data = order_json.get("order", order_json)
+        order = SimpleOrder(**data)
 
         time.sleep(random.uniform(self.MIN_PROCESSING_TIME, self.MAX_PROCESSING_TIME))
 
-        if self.orders.get(order_object.order) is not None:
-            print(
-                f"[Delivery {self.service_id}] Pedido {order_object.order} já foi processado."
-            )
-            return
+        with self.orders_lock:
+            if order.id in self.orders:
+                return
 
-        order = self.generate_delivery_id(order_object)
-        self.status_callback(order)
+            self.orders[order.id] = None
 
         order = self.assign_courier(order)
         self.status_callback(order)
 
+        time.sleep(5)
+
         order = self.calculate_estimated_arrival(order)
         self.status_callback(order)
 
-        self.orders[order.order] = order
+        time.sleep(5)
+
+        with self.orders_lock:
+            self.orders[order.id] = order
 
         self.print_status(order)
 
         return order
 
+
     def generate_delivery_id(self, order):
         order.generate_delivery_id()
         order.change_status(OrderStatus.UPDATED)
-
         return order
 
     def assign_courier(self, order):
         order.assign_random_courier()
         order.change_status(OrderStatus.ASSIGNED)
-
         return order
 
     def calculate_estimated_arrival(self, order):
         order.calculate_estimated_arrival()
         order.change_status(OrderStatus.ENROUTE)
-
         return order
 
     def print_status(self, order):
-        local_sent_time = order.updated_at.astimezone(ZoneInfo("America/Sao_Paulo"))
         print(
-            f"[Delivery {self.service_id}] {order.courier} saiu para a entrega do pedido {order.order} às {local_sent_time:%H:%M:%S} UTC-3."
+            f"[spring_green3][Delivery {self.service_id}][/spring_green3] {datetime.now().strftime('%H:%M:%S')} - [Pedido {order.id}] {order.courier} saiu para a entrega do pedido"
         )
 
         local_arrival_time = order.estimated_arrival_at.astimezone(
             ZoneInfo("America/Sao_Paulo")
         )
         print(
-            f"[Delivery {self.service_id}] O pedido {order.order} chegará às {local_arrival_time:%H:%M:%S} UTC-3."
+            f"[spring_green3][Delivery {self.service_id}][/spring_green3] {datetime.now().strftime('%H:%M:%S')} - [Pedido {order.id}] Horário de entrega estimado: {local_arrival_time:%H:%M:%S}"
         )
 
     def check_delivered_orders(self):
-        for order in list(self.orders.values()):
+        with self.orders_lock:
+            orders_copy = list(self.orders.values())
+
+        for order in orders_copy:
+            if not order:
+                continue
+
             if (
                 order.status != OrderStatus.ENROUTE
                 or order.estimated_arrival_at is None
@@ -88,8 +96,10 @@ class DeliveryProcessor:
                 order.change_status(OrderStatus.DELIVERED)
 
                 print(
-                    f"[Delivery {self.service_id}] O pedido {order.order} foi entregue por {order.courier}."
+                    f"[spring_green3][Delivery {self.service_id}][/spring_green3] {datetime.now().strftime('%H:%M:%S')} - [Pedido {order.id}] Pedido entregue"
                 )
                 self.status_callback(order)
 
-                self.orders.pop(order.order, None)
+                with self.orders_lock:
+                    self.orders.pop(order.id, None)
+

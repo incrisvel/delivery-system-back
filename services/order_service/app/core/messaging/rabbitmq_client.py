@@ -1,12 +1,15 @@
 from queue import Queue
+from rich import print
 import threading
 import uuid
 import json
-from fastapi import Depends
+from datetime import datetime
 
-from services.order_service.app.core.db.models.order import Order
+from services.order_service.app.core.utils.models import update_model_from_schema
 from services.order_service.app.core.db.session import get_session
+from services.shared.simple_order import OrderStatus
 from services.order_service.app.modules.order.repository import OrderRepository
+from services.order_service.app.modules.delivery.repository import DeliveryRepository
 from services.shared.components_enum import Exchanges, Queues
 from services.shared.connection_manager import ConnectionManager
 from services.shared.notification import Notification
@@ -27,20 +30,27 @@ class RabbitMQClient:
 
     def _consumer_setup(self):
         self.channel_consumer = self.connection.create_channel()
-        self.order_exchange = self.connection.create_exchange(
+        self.connection.create_exchange(
             self.channel_consumer,
             Exchanges.NOTIFICATION_EXCHANGE.declaration,
             Exchanges.NOTIFICATION_EXCHANGE.type,
         )
-        self.notification_queue = self.connection.create_queue(
+
+        self.connection.create_queue(
             self.channel_consumer,
             Queues.ORDER_QUEUE,
             bindings=[
                 {
                     "exchange": Exchanges.NOTIFICATION_EXCHANGE.declaration,
-                    "routing_key": ""
+                    "routing_key": "",
                 }
-            ]
+            ],
+        )
+
+        self.channel_consumer.basic_consume(
+            queue=Queues.ORDER_QUEUE,
+            on_message_callback=self.process_notification,
+            auto_ack=False,
         )
 
     def _producer_setup(self):
@@ -51,27 +61,54 @@ class RabbitMQClient:
             Exchanges.ORDER_EXCHANGE.type,
         )
 
-    def process_notification(self, ch, method, properties, body, session=Depends(get_session)):
+    def process_notification(
+        self,
+        ch,
+        method,
+        properties,
+        body,
+    ):
+        session = next(get_session())
         try:
             if properties.content_type != "application/json":
-                print(f"[Notification {self.id}] Tipo inválido: {properties.content_type}")
+                print(
+                    f"[spring_green3][Order {self.id}][/spring_green3] {datetime.now().strftime('%H:%M:%S')} Tipo inválido: {properties.content_type}"
+                )
                 ch.basic_ack(delivery_tag=method.delivery_tag)
                 return
 
             notification = Notification(**json.loads(body))
 
-            print(f"[Notification {self.id}] Recebido:", notification)
+            print(
+                f"[spring_green3][Order {self.id}][/spring_green3] {datetime.now().strftime('%H:%M:%S')} - [Pedido {notification.order.id}] Atualização de status recebida: [cyan2]{notification.order.status.value}[/cyan2].",
+                f"{f'Entregador: {notification.order.courier}' if notification.status == OrderStatus.ASSIGNED else ''}",
+            )
 
-            repo = OrderRepository(session=session)
-            repo.update_order(Order(**notification.order.model_dump()))
+            if notification.order.status == OrderStatus.ASSIGNED:
+                self._assign_delivery_courier(notification.order, session)
 
-            self.publish_order_status_changed(notification)
-
+            self._update_order_status(notification.order, session)
         except Exception as e:
-            print(f"[Notification {self.id}] ERRO:", e)
+            print(
+                f"[spring_green3][Order {self.id}][/spring_green3] {datetime.now().strftime('%H:%M:%S')} ERRO:",
+                e,
+            )
 
         finally:
             ch.basic_ack(delivery_tag=method.delivery_tag)
+
+    def _update_order_status(self, simple_order, session):
+        repo = OrderRepository(session=session)
+        order = repo.get_order_by_id(simple_order.id)
+        update_model_from_schema(order, simple_order)
+        repo.update_order(order)
+        repo.session.commit()
+
+    def _assign_delivery_courier(self, order, session):
+        delivery_repo = DeliveryRepository(session=session)
+        delivery = delivery_repo.get_delivery_by_id(order.delivery_id)
+        delivery.courier = order.courier
+        delivery_repo.session.flush()
 
     def publish_delivery_status_changed(self, order):
         notification = Notification.from_order_schema(order)
@@ -91,10 +128,11 @@ class RabbitMQClient:
             body=payload,
             properties=self.connection.define_publish_properties(
                 {"headers": {"service_id": self.id}}
-            )
+            ),
         )
-        print("KEY", key)
-        print(f"[Order {self.id}] Notificação enviada:", payload)
+        print(
+            f"[spring_green3][Order {self.id}][/spring_green3] {datetime.now().strftime('%H:%M:%S')} - [Pedido {notification.order.id}] Pedido criado e enviado para delivery"
+        )
 
     def produce(self):
         while self.running:
@@ -106,11 +144,15 @@ class RabbitMQClient:
                 pass
 
     def consume(self):
-        print(f"[Order {self.id}] Aguardando notificações...")
+        print(
+            f"[spring_green3][Order {self.id}][/spring_green3] {datetime.now().strftime('%H:%M:%S')} Aguardando notificações..."
+        )
         try:
             self.channel_consumer.start_consuming()
         except Exception as e:
-            print("Erro no consumidor:", e)
+            print(
+                f"[spring_green3][Order {self.id}][/spring_green3] {datetime.now().strftime('%H:%M:%S')} Erro no consumidor: {e}"
+            )
 
     def run(self):
         self.running = True
@@ -132,4 +174,6 @@ class RabbitMQClient:
         self.channel_consumer.close()
         self.channel_producer.close()
 
-        print(f"[Order {self.id}] Conexões encerradas.")
+        print(
+            f"[spring_green3][Order {self.id}][/spring_green3] {datetime.now().strftime('%H:%M:%S')} Conexões encerradas."
+        )

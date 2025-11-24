@@ -1,11 +1,16 @@
 from typing import List, Optional
+from services.order_service.app.modules.order.schemas import OrderWithItemsCreate
 from services.order_service.app.core.utils.models import update_model_from_schema
 from fastapi import Depends
 from services.order_service.app.core.db.models.delivery import Delivery
+from services.order_service.app.core.db.models.establishment import Establishment
 from services.order_service.app.core.db.session import get_session
 from services.order_service.app.modules.delivery.exceptions import DeliveryNotFoundError
 from services.order_service.app.modules.delivery.repository import DeliveryRepository
-from services.order_service.app.modules.delivery.schemas import DeliveryCreate, DeliveryUpdate
+from services.order_service.app.modules.delivery.schemas import (
+    DeliveryCreate,
+    DeliveryUpdate,
+)
 
 
 class DeliveryService:
@@ -36,9 +41,16 @@ class DeliveryService:
 
         return delivery
 
-    def create_delivery(self, delivery_create: DeliveryCreate) -> Delivery:
-        delivery = Delivery(**delivery_create.model_dump())
-        delivery = self.repo.create_delivery(delivery)
+    def create_delivery(
+        self, order: OrderWithItemsCreate, establishment: Establishment
+    ) -> Delivery:
+        delivery = Delivery(
+            origin_latitude=establishment.latitude,
+            origin_longitude=establishment.longitude,
+            destination_latitude=order.client_lat,
+            destination_longitude=order.client_long,
+        )
+        self.repo.create_delivery(delivery)
         self.repo.session.commit()
         return delivery
 
