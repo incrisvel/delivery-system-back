@@ -18,28 +18,33 @@ class DeliveryProcessor:
         self.status_callback = status_callback
 
     def process_new_order(self, body):
-        print("AQUI")
         order_json = json.loads(body)
-        order_object = SimpleOrder(**order_json)
+        order_object = SimpleOrder(**order_json["order"])
 
         time.sleep(random.uniform(self.MIN_PROCESSING_TIME, self.MAX_PROCESSING_TIME))
 
-        if self.orders.get(order_object.order) is not None:
+        if self.orders.get(order_object.id) is not None:
             print(
-                f"[Delivery {self.service_id}] Pedido {order_object.order} já foi processado."
+                f"[Delivery {self.service_id}] Pedido {order_object.id} já foi processado."
             )
             return
 
         order = self.generate_delivery_id(order_object)
         self.status_callback(order)
 
+        time.sleep(5)
+
         order = self.assign_courier(order)
         self.status_callback(order)
+
+        time.sleep(5)
 
         order = self.calculate_estimated_arrival(order)
         self.status_callback(order)
 
-        self.orders[order.order] = order
+        time.sleep(5)
+
+        self.orders[order.id] = order
 
         self.print_status(order)
 
@@ -66,14 +71,14 @@ class DeliveryProcessor:
     def print_status(self, order):
         local_sent_time = order.updated_at.astimezone(ZoneInfo("America/Sao_Paulo"))
         print(
-            f"[Delivery {self.service_id}] {order.courier} saiu para a entrega do pedido {order.order} às {local_sent_time:%H:%M:%S} UTC-3."
+            f"[Delivery {self.service_id}] {order.courier} saiu para a entrega do pedido {order.id} às {local_sent_time:%H:%M:%S} UTC-3."
         )
 
         local_arrival_time = order.estimated_arrival_at.astimezone(
             ZoneInfo("America/Sao_Paulo")
         )
         print(
-            f"[Delivery {self.service_id}] O pedido {order.order} chegará às {local_arrival_time:%H:%M:%S} UTC-3."
+            f"[Delivery {self.service_id}] O pedido {order.id} chegará às {local_arrival_time:%H:%M:%S} UTC-3."
         )
 
     def check_delivered_orders(self):
@@ -88,8 +93,8 @@ class DeliveryProcessor:
                 order.change_status(OrderStatus.DELIVERED)
 
                 print(
-                    f"[Delivery {self.service_id}] O pedido {order.order} foi entregue por {order.courier}."
+                    f"[Delivery {self.service_id}] O pedido {order.id} foi entregue por {order.courier}."
                 )
                 self.status_callback(order)
 
-                self.orders.pop(order.order, None)
+                self.orders.pop(order.id, None)

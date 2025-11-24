@@ -23,11 +23,11 @@ class SimpleOrder(BaseModel):
 
     def generate_delivery_id(self):
         if self.delivery_id is None:
-            self.delivery = randint(0, 99999)
+            self.delivery_id = randint(0, 99999)
 
     def assign_random_courier(self):
         if self.courier is not None:
-            print(f"O pedido {self.delivery} já está atribuído a {self.courier}.")
+            print(f"O pedido {self.delivery_id} já está atribuído a {self.courier}.")
         else:
             self.courier = choice(["Ademir", "Garibaldo", "Aristóteles", "Enzo", "Valentina", "Dolores", "Gertrudes"])
 

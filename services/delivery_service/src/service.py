@@ -99,7 +99,7 @@ class DeliveryService:
         ch.basic_ack(delivery_tag=method.delivery_tag)
 
     def publish_order_update(self, order):
-        self.publish(key=f"order.delivery.{order.status.value}", body=order.model_dump_json())
+        self.publish(key=f"order.{order.status.value}", body=order.model_dump_json())
 
     def publish(self, key, body):
         self.channel_producer.basic_publish(
@@ -108,7 +108,7 @@ class DeliveryService:
             body=body,
             properties=self.connection.define_publish_properties(
                 {"headers": {"service_id": self.id}}
-            ),
+            )
         )
 
     def on_status_change(self, order):

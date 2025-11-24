@@ -19,13 +19,18 @@ class NotificationProcessor:
 
     def process_notification(self, body):
         order_json = json.loads(body)
-        order_object = SimpleOrder(**order_json["order"])
+
+        data = order_json.get("order", order_json)
+        order_object = SimpleOrder(**data)
+
+        ## order_object = SimpleOrder(**order_json["order"])
 
         time.sleep(random.uniform(self.MIN_PROCESSING_TIME, self.MAX_PROCESSING_TIME))
 
         notification = Notification.from_order_schema(order_object)
 
         self.print_status(notification)
+        self.status_callback(notification)
 
         return notification
 

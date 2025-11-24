@@ -70,9 +70,9 @@ class NotificationService:
             exchange=Exchanges.NOTIFICATION_EXCHANGE.declaration,
             routing_key="",
             body=notification.model_dump_json(),
-            properties=self.connection.create_message_properties(
-                content_type="application/json", headers={"service_id": self.id}
-            ),
+            properties=self.connection.define_publish_properties(
+                {"headers": {"service_id": self.id}}
+            )
         )
 
     def on_status_change(self, notification):
@@ -82,10 +82,12 @@ class NotificationService:
     def produce(self):
         while True:
             notification = self.producer_queue.get()
+
             if notification is None:
                 break
-        self.publish_notification(notification)
-        self.producer_queue.task_done()
+
+            self.publish_notification(notification)
+            self.producer_queue.task_done()
 
     def consume(self):
         print(f"[Notification {self.id}] Aguardando eventos de pedidos...")
