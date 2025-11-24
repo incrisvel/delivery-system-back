@@ -41,36 +41,42 @@ class DeliveryService:
             bindings=[
                 {
                     "exchange": Exchanges.ORDER_EXCHANGE.declaration,
-                    "routing_key": "order.created",
+                    "routing_key": "order.confirmed",
                 },
                 {
                     "exchange": Exchanges.NOTIFICATION_EXCHANGE.declaration,
-                    "routing_key": ""},
-            ]
+                    "routing_key": "",
+                },
+            ],
         )
 
-        self.connection.create_exchange(self.channel_consumer,
-                                        Exchanges.DEAD_LETTER_EXCHANGE.declaration,
-                                        Exchanges.DEAD_LETTER_EXCHANGE.type)
+        self.connection.create_exchange(
+            self.channel_consumer,
+            Exchanges.DEAD_LETTER_EXCHANGE.declaration,
+            Exchanges.DEAD_LETTER_EXCHANGE.type,
+        )
 
         retry_arguments = {
-            'x-message-ttl': 15000,
-            'x-dead-letter-exchange': Exchanges.ORDER_EXCHANGE.declaration,
+            "x-message-ttl": 15000,
+            "x-dead-letter-exchange": Exchanges.ORDER_EXCHANGE.declaration,
         }
 
         self.connection.create_queue(
             self.channel_consumer,
             Queues.DELIVERY_RETRY_QUEUE,
             bindings=[
-                {"exchange": Exchanges.ORDER_EXCHANGE.declaration, "routing_key": "delivery.retry"},
+                {
+                    "exchange": Exchanges.ORDER_EXCHANGE.declaration,
+                    "routing_key": "delivery.retry",
+                },
             ],
-            arguments=retry_arguments
+            arguments=retry_arguments,
         )
 
         self.connection.create_queue(
             self.channel_consumer,
             Queues.DEAD_LETTER_QUEUE,
-            bindings=[{"exchange": Exchanges.DEAD_LETTER_EXCHANGE.declaration}]
+            bindings=[{"exchange": Exchanges.DEAD_LETTER_EXCHANGE.declaration}],
         )
 
         self.channel_consumer.basic_consume(
@@ -108,7 +114,7 @@ class DeliveryService:
             body=body,
             properties=self.connection.define_publish_properties(
                 {"headers": {"service_id": self.id}}
-            )
+            ),
         )
 
     def on_status_change(self, order):

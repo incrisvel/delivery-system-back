@@ -35,10 +35,11 @@ class OrderService:
 
         return order
 
-    def create_order(self, order_create_with_items: OrderWithItemsCreate) -> Order:
+    def create_order(self, order_create_with_items: OrderWithItemsCreate, delivery_id: int) -> Order:
         order_create = OrderCreate(**order_create_with_items.model_dump())
 
         order = Order(**order_create.model_dump())
+        order.delivery_id = delivery_id
         order = self.repo.create_order(order)
 
         self.rabbitmq.publish_order_status_changed(SimpleOrder.model_validate(order, from_attributes=True))

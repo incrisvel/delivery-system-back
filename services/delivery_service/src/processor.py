@@ -19,20 +19,18 @@ class DeliveryProcessor:
 
     def process_new_order(self, body):
         order_json = json.loads(body)
-        order_object = SimpleOrder(**order_json["order"])
+        print("JSON", order_json)
+
+        data = order_json.get("order", order_json)
+        order = SimpleOrder(**data)
 
         time.sleep(random.uniform(self.MIN_PROCESSING_TIME, self.MAX_PROCESSING_TIME))
 
-        if self.orders.get(order_object.id) is not None:
+        if self.orders.get(order.id) is not None:
             # print(
-            #     f"[Delivery {self.service_id}] Pedido {order_object.id} já foi processado."
+            #     f"[Delivery {self.service_id}] Pedido {order.id} já foi processado."
             # )
             return
-
-        order = self.generate_delivery_id(order_object)
-        self.status_callback(order)
-
-        time.sleep(5)
 
         order = self.assign_courier(order)
         self.status_callback(order)

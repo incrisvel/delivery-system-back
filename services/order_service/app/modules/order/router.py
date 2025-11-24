@@ -2,10 +2,28 @@ from typing import Annotated, List, Optional
 from fastapi import APIRouter, Depends
 from http import HTTPStatus
 
+from services.order_service.app.modules.delivery.service import (
+    DeliveryService,
+    get_delivery_service,
+)
+from services.order_service.app.modules.establishment.service import (
+    EstablishmentService,
+    get_establishment_service,
+)
 from services.order_service.app.core.db.models.order import OrderStatus
-from services.order_service.app.modules.order.schemas import OrderWithItemsCreate, OrderRead, OrderUpdate
-from services.order_service.app.modules.order.service import OrderService, get_order_service
-from services.order_service.app.modules.order_item.service import OrderItemService, get_order_item_service
+from services.order_service.app.modules.order.schemas import (
+    OrderWithItemsCreate,
+    OrderRead,
+    OrderUpdate,
+)
+from services.order_service.app.modules.order.service import (
+    OrderService,
+    get_order_service,
+)
+from services.order_service.app.modules.order_item.service import (
+    OrderItemService,
+    get_order_item_service,
+)
 
 
 router = APIRouter(prefix="/orders", tags=["Orders"])
@@ -32,12 +50,18 @@ def get_by_id(order_id: int, order_service: OrderServiceDep):
 
 @router.post("", response_model=OrderRead, status_code=HTTPStatus.CREATED)
 def create_order(
-    order_with_items_create: OrderWithItemsCreate,
+    order_create: OrderWithItemsCreate,
     order_service: OrderServiceDep,
     order_item_service: OrderItemService = Depends(get_order_item_service),
+    establishment_service: EstablishmentService = Depends(get_establishment_service),
+    delivery_service: DeliveryService = Depends(get_delivery_service),
 ):
-    order = order_service.create_order(order_with_items_create)
-    order_item_service.create_order_item(order, order_with_items_create.items)
+    establishment = establishment_service.get_establishment_by_id(
+        order_create.establishment_id
+    )
+    delivery = delivery_service.create_delivery(order_create, establishment)
+    order = order_service.create_order(order_create, delivery.id)
+    order_item_service.create_order_item(order, order_create.items)
     order_service.repo.session.commit()
     return order
 
