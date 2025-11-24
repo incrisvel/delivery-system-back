@@ -26,15 +26,12 @@ class SimpleOrder(BaseModel):
             self.delivery_id = randint(0, 99999)
 
     def assign_random_courier(self):
-        if self.courier is not None:
-            print(f"O pedido {self.delivery_id} já está atribuído a {self.courier}.")
-        else:
-            self.courier = choice(["Ademir", "Garibaldo", "Aristóteles", "Enzo", "Valentina", "Dolores", "Gertrudes"])
+        self.courier = choice(["Ademir", "Garibaldo", "Aristóteles", "Enzo", "Valentina", "Dolores", "Gertrudes"])
 
     def change_status(self, new_status: OrderStatus):
         self.status = new_status
         self.updated_at = datetime.now(timezone.utc)
 
     def calculate_estimated_arrival(self):
-        estimated_minutes = randint(1, 5)
+        estimated_minutes = randint(1, 2)
         self.estimated_arrival_at = datetime.now(timezone.utc) + timedelta(minutes=estimated_minutes)

@@ -27,12 +27,13 @@ class RabbitMQClient:
 
     def _consumer_setup(self):
         self.channel_consumer = self.connection.create_channel()
-        self.order_exchange = self.connection.create_exchange(
+        self.connection.create_exchange(
             self.channel_consumer,
             Exchanges.NOTIFICATION_EXCHANGE.declaration,
             Exchanges.NOTIFICATION_EXCHANGE.type,
         )
-        self.notification_queue = self.connection.create_queue(
+
+        self.connection.create_queue(
             self.channel_consumer,
             Queues.ORDER_QUEUE,
             bindings=[
@@ -41,6 +42,12 @@ class RabbitMQClient:
                     "routing_key": ""
                 }
             ]
+        )
+
+        self.channel_consumer.basic_consume(
+            queue=Queues.ORDER_QUEUE,
+            on_message_callback=self.process_notification,
+            auto_ack=False,
         )
 
     def _producer_setup(self):
@@ -64,8 +71,6 @@ class RabbitMQClient:
 
             repo = OrderRepository(session=session)
             repo.update_order(Order(**notification.order.model_dump()))
-
-            self.publish_order_status_changed(notification)
 
         except Exception as e:
             print(f"[Notification {self.id}] ERRO:", e)

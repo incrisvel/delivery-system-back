@@ -24,9 +24,9 @@ class DeliveryProcessor:
         time.sleep(random.uniform(self.MIN_PROCESSING_TIME, self.MAX_PROCESSING_TIME))
 
         if self.orders.get(order_object.id) is not None:
-            print(
-                f"[Delivery {self.service_id}] Pedido {order_object.id} já foi processado."
-            )
+            # print(
+            #     f"[Delivery {self.service_id}] Pedido {order_object.id} já foi processado."
+            # )
             return
 
         order = self.generate_delivery_id(order_object)
