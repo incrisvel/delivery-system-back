@@ -20,7 +20,7 @@ class RingNode:
     def __init__(
         self,
         my_address: str,
-        websocket_path: str = "/ring/ws",
+        websocket_path: str = "/ws/ring",
         node_id: Optional[str] = None,
     ):
         self.node_id = node_id or str(uuid.uuid4())[:8]

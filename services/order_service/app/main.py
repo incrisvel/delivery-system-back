@@ -9,11 +9,12 @@ from services.order_service.app.modules.order.router import router as orders
 from services.order_service.app.modules.establishment.router import (
     router as establishments,
 )
-from services.order_service.app.core.messaging import container
+from services.order_service.app.core.messaging import container as rabbitmq_container
+from services.order_service.app.core.websocket import container as ws_container
 from fastapi.middleware.cors import CORSMiddleware
 
 from services.order_service.app.core.cluster.ring import (
-    RingNode,
+    RingNode
 )
 
 
@@ -43,19 +44,29 @@ ring = RingNode(my_address=f"http://127.0.0.1:{PORT}")
 async def startup_cluster():
     print("Iniciando ring cluster...")
     await ring.start()
-    container.rabbitmq_client.run()
+    rabbitmq_container.rabbitmq_client.run()
 
 
 @app.on_event("shutdown")
 async def shutdown_cluster():
     print("Finalizando ring cluster...")
     await ring.stop()
-    container.rabbitmq_client.stop()
+    rabbitmq_container.rabbitmq_client.stop()
 
 
-@app.websocket("/ring/ws")
+@app.websocket("/ws/ring")
 async def ring_ws_endpoint(ws: WebSocket):
     await ring.handle_incoming_ws(ws)
+
+
+@app.websocket("/ws/orders/{order_id}")
+async def order_ws(websocket: WebSocket, order_id: str):
+    await ws_container.websocket_manager.connect(order_id, websocket)
+    try:
+        while True:
+            await websocket.receive_text()
+    except Exception:
+        ws_container.websocket_manager.disconnect(order_id)
 
 
 @app.middleware("http")
