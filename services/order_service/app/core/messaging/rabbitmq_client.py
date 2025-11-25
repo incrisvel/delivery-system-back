@@ -1,3 +1,4 @@
+import asyncio
 from queue import Queue
 from rich import print
 import threading
@@ -13,6 +14,7 @@ from services.order_service.app.modules.delivery.repository import DeliveryRepos
 from services.shared.components_enum import Exchanges, Queues
 from services.shared.connection_manager import ConnectionManager
 from services.shared.notification import Notification
+from services.order_service.app.core.websocket import container
 
 
 class RabbitMQClient:
@@ -21,6 +23,7 @@ class RabbitMQClient:
         self.producer_queue = Queue()
         self.connection = ConnectionManager()
         self.running = False
+        self.ws = container.websocket_manager
 
         self._components_setup()
 
@@ -88,6 +91,8 @@ class RabbitMQClient:
                 self._assign_delivery_courier(notification.order, session)
 
             self._update_order_status(notification.order, session)
+            
+            self._send_ws_update(notification.order)
         except Exception as e:
             print(
                 f"[spring_green3][Order {self.id}][/spring_green3] {datetime.now().strftime('%H:%M:%S')} ERRO:",
@@ -103,6 +108,13 @@ class RabbitMQClient:
         update_model_from_schema(order, simple_order)
         repo.update_order(order)
         repo.session.commit()
+    
+    def _send_ws_update(self, order):
+        try:
+            payload = Notification.from_order_schema(order=order).model_dump_json()
+            asyncio.run(self.ws.send_json(str(order.id), payload))
+        except Exception as e:
+            print(f"[spring_green3][Order {self.id}][/spring_green3] {datetime.now().strftime('%H:%M:%S')} - [Pedido {order.id}] Erro ao enviar via WebSocket: {e}")
 
     def _assign_delivery_courier(self, order, session):
         delivery_repo = DeliveryRepository(session=session)
