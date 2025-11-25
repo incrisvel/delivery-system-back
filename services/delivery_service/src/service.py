@@ -11,6 +11,8 @@ from services.shared.connection_manager import ConnectionManager
 
 
 class DeliveryService:
+    MAX_RETRIES = 5
+
     def __init__(self):
         self.id = str(uuid.uuid4())[:4]
         self.producer_queue = Queue()
@@ -103,16 +105,65 @@ class DeliveryService:
             Exchanges.ORDER_EXCHANGE.type,
         )
 
+    def _handle_retry(self, ch, method, properties, body):
+        headers = properties.headers or {}
+        retry_count = headers.get("x-retry-count", 0)
+
+        if retry_count >= self.MAX_RETRIES:
+            print(
+                f"[spring_green3][Delivery {self.id}][/spring_green3] "
+                f"{datetime.now().strftime('%H:%M:%S')} Tentativas excedidas -> DLQ"
+            )
+
+            ch.basic_publish(
+                exchange=Exchanges.DEAD_LETTER_EXCHANGE.declaration,
+                routing_key="delivery.dead",
+                body=body,
+                properties=self.connection.define_publish_properties(
+                    {"headers": {"x-retry-count": retry_count}}
+                )
+            )
+
+            ch.basic_ack(delivery_tag=method.delivery_tag)
+            return
+
+        new_retry_count = retry_count + 1
+
+        print(
+            f"[spring_green3][Delivery {self.id}][/spring_green3] "
+            f"{datetime.now().strftime('%H:%M:%S')} Enviando para retry ({new_retry_count}/{self.MAX_RETRIES})"
+        )
+
+        ch.basic_publish(
+            exchange=Exchanges.DEAD_LETTER_EXCHANGE.declaration,
+            routing_key="delivery.retry",
+            body=body,
+            properties=self.connection.define_publish_properties(
+                {"headers": {"x-retry-count": new_retry_count}}
+            )
+        )
+
+        ch.basic_ack(delivery_tag=method.delivery_tag)
+
     def process_order_created(self, ch, method, properties, body):
         if properties.content_type != "application/json":
             print(
-                f"[spring_green3][Delivery {self.id}][/spring_green3] {datetime.now().strftime('%H:%M:%S')} Tipo de conteúdo inválido: {properties.content_type}"
+                f"[spring_green3][Delivery {self.id}][/spring_green3] "
+                f"{datetime.now().strftime('%H:%M:%S')} Tipo de conteúdo inválido: {properties.content_type}"
             )
+            ch.basic_ack(delivery_tag=method.delivery_tag)
             return
 
-        self.processor.process_new_order(body)
+        try:
+            self.processor.process_new_order(body)
+            ch.basic_ack(delivery_tag=method.delivery_tag)
 
-        ch.basic_ack(delivery_tag=method.delivery_tag)
+        except Exception as e:
+            print(
+                f"[spring_green3][Delivery {self.id}][/spring_green3] "
+                f"{datetime.now().strftime('%H:%M:%S')} Erro no processamento: {e}"
+            )
+            self._handle_retry(ch, method, properties, body)
 
     def publish_order_update(self, order):
         notification = Notification.from_order_schema(order)
@@ -145,13 +196,13 @@ class DeliveryService:
             self.producer_queue.task_done()
 
     def consume(self):
-        print(f"[spring_green3][Delivery {self.id}][/spring_green3] {datetime.now().strftime('%H:%M:%S')} Aguardando atualizações...")
+        print(f"[spring_green3][Delivery {self.id}][/spring_green3] "
+              f"{datetime.now().strftime('%H:%M:%S')} Aguardando atualizações...")
         self.channel_consumer.start_consuming()
 
     def check_delivery_time(self):
         while True:
             self.processor.check_delivered_orders()
-
             threading.Event().wait(30)
 
     def run(self):
@@ -167,13 +218,15 @@ class DeliveryService:
         self.time_thread.start()
 
         try:
-            print(f"[spring_green3][Delivery {self.id}][/spring_green3] {datetime.now().strftime('%H:%M:%S')} Pressione 'Ctrl + C' para sair.\n")
+            print(f"[spring_green3][Delivery {self.id}][/spring_green3] "
+                  f"{datetime.now().strftime('%H:%M:%S')} Pressione 'Ctrl + C' para sair.\n")
 
             while True:
                 pass
 
         except KeyboardInterrupt:
-            print(f"\n[spring_green3][Delivery {self.id}][/spring_green3] {datetime.now().strftime('%H:%M:%S')} Encerrando.")
+            print(f"\n[spring_green3][Delivery {self.id}][/spring_green3] "
+                  f"{datetime.now().strftime('%H:%M:%S')} Encerrando.")
 
         finally:
             if self.channel_consumer.is_open:
@@ -186,7 +239,8 @@ class DeliveryService:
             if self.channel_consumer.connection.is_open:
                 self.channel_consumer.close()
 
-            print(f"[spring_green3][Delivery {self.id}][/spring_green3] {datetime.now().strftime('%H:%M:%S')} Conexão fechada.")
+            print(f"[spring_green3][Delivery {self.id}][/spring_green3] "
+                  f"{datetime.now().strftime('%H:%M:%S')} Conexão fechada.")
 
 
 if __name__ == "__main__":

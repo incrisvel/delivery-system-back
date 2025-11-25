@@ -91,7 +91,7 @@ class RabbitMQClient:
                 self._assign_delivery_courier(notification.order, session)
 
             self._update_order_status(notification.order, session)
-            
+
             self._send_ws_update(notification.order)
         except Exception as e:
             print(
@@ -108,7 +108,7 @@ class RabbitMQClient:
         update_model_from_schema(order, simple_order)
         repo.update_order(order)
         repo.session.commit()
-    
+
     def _send_ws_update(self, order):
         try:
             payload = Notification.from_order_schema(order=order).model_dump_json()
