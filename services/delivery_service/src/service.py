@@ -7,7 +7,7 @@ from services.shared.components_enum import Exchanges, Queues
 from services.shared.notification import Notification
 
 from .processor import DeliveryProcessor
-from services.shared.connection_manager import ConnectionManager
+from services.shared.connection_manager import ConnectionManager, reconnect
 
 
 class DeliveryService:
@@ -170,6 +170,7 @@ class DeliveryService:
         key = f"order.delivery.{order.status.value}"
         self.publish_notification(key, notification)
 
+    @reconnect
     def publish_notification(self, key, notification: Notification):
         payload = notification.model_dump_json()
         self.channel_producer.basic_publish(
@@ -195,6 +196,7 @@ class DeliveryService:
             self.publish_order_update(order)
             self.producer_queue.task_done()
 
+    @reconnect
     def consume(self):
         print(f"[spring_green3][Delivery {self.id}][/spring_green3] "
               f"{datetime.now().strftime('%H:%M:%S')} Aguardando atualizações...")

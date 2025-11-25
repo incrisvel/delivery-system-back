@@ -12,7 +12,7 @@ from services.shared.simple_order import OrderStatus
 from services.order_service.app.modules.order.repository import OrderRepository
 from services.order_service.app.modules.delivery.repository import DeliveryRepository
 from services.shared.components_enum import Exchanges, Queues
-from services.shared.connection_manager import ConnectionManager
+from services.shared.connection_manager import ConnectionManager, reconnect
 from services.shared.notification import Notification
 from services.order_service.app.core.websocket import container
 
@@ -132,6 +132,7 @@ class RabbitMQClient:
         key = f"order.{order.status.value}"
         self.publish_notification(key, notification)
 
+    @reconnect
     def publish_notification(self, key: str, notification: Notification):
         payload = notification.model_dump_json()
         self.channel_producer.basic_publish(
@@ -155,6 +156,7 @@ class RabbitMQClient:
             except Exception:
                 pass
 
+    @reconnect
     def consume(self):
         print(
             f"[spring_green3][Order {self.id}][/spring_green3] {datetime.now().strftime('%H:%M:%S')} Aguardando notificações..."

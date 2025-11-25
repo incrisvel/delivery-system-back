@@ -1,47 +1,49 @@
 import pika
+from rich import print
+from pika import exceptions
 from typing import Dict, Any
 
 from .settings import settings
 
-class ConnectionManager:
 
+class ConnectionManager:
     def __init__(self):
         credentials = pika.PlainCredentials(
             settings.rabbitmq_user, settings.rabbitmq_pass
         )
 
         self.parameters = pika.ConnectionParameters(
-            settings.rabbitmq_host,
-            settings.rabbitmq_port,
-            settings.rabbitmq_vhost,
-            credentials,
+            host=settings.rabbitmq_host,
+            port=settings.rabbitmq_port,
+            virtual_host=settings.rabbitmq_vhost,
+            credentials=credentials,
+            heartbeat=60,
+            blocked_connection_timeout=60,
         )
+
+    def create_connection(self):
+        return pika.BlockingConnection(self.parameters)
 
     def create_channel(self):
-        connection = pika.BlockingConnection(self.parameters)
-        channel = connection.channel()
-        return channel
+        conn = self.create_connection()
+        return conn.channel()
 
-    def create_exchange(self, channel, exchange_name, exchange_type):
-        exchange = channel.exchange_declare(
-            exchange=exchange_name,
-            exchange_type=exchange_type,
-            durable=True
-        )
-        return exchange
+    def create_exchange(self, channel, name, type):
+        return channel.exchange_declare(exchange=name, exchange_type=type, durable=True)
 
-    def create_queue(self, channel, queue_name, bindings: Dict[str, Any] = None, arguments: Dict[str, Any] = None):
-        queue = channel.queue_declare(queue=queue_name, durable=True, arguments=arguments).method.queue
+    def create_queue(self, channel, queue_name, bindings=None, arguments=None):
+        queue = channel.queue_declare(
+            queue=queue_name, durable=True, arguments=arguments
+        ).method.queue
+
         if bindings:
             for binding in bindings:
-                exchange = binding.get("exchange")
-                if not exchange:
-                    continue
-                routing_key = binding.get("routing_key", None)
-                if routing_key is None:
-                    channel.queue_bind(exchange=exchange, queue=queue_name)
-                else:
-                    channel.queue_bind(exchange=exchange, queue=queue_name, routing_key=routing_key)
+                channel.queue_bind(
+                    exchange=binding["exchange"],
+                    queue=queue_name,
+                    routing_key=binding.get("routing_key", ""),
+                )
+
         return queue
 
     def define_publish_properties(self, properties: Dict[str, Any]):
@@ -51,7 +53,25 @@ class ConnectionManager:
         delivery_mode = props.pop("delivery_mode", pika.DeliveryMode.Persistent)
 
         return pika.BasicProperties(
-            content_type=content_type,
-            delivery_mode=delivery_mode,
-            **props
+            content_type=content_type, delivery_mode=delivery_mode, **props
         )
+
+
+def reconnect(method):
+    def wrapper(self, *args, **kwargs):
+        try:
+            return method(self, *args, **kwargs)
+        except exceptions.AMQPError as e:
+            print(f"[light_goldenrod1]WARN:[/light_goldenrod1] Conexão perdida durante {method.__name__}: {e}")
+            print("[light_goldenrod1]WARN:[/light_goldenrod1] Criando nova conexão e canal...")
+
+            new_channel = self.connection.create_channel()
+
+            if "consumer" in method.__name__:
+                self.channel_consumer = new_channel
+            else:
+                self.channel_producer = new_channel
+
+            return method(self, *args, **kwargs)
+
+    return wrapper

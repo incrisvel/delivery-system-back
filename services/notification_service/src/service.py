@@ -5,7 +5,7 @@ from rich import print
 from services.notification_service.src.processor import NotificationProcessor
 from services.shared.components_enum import Exchanges, Queues
 
-from services.shared.connection_manager import ConnectionManager
+from services.shared.connection_manager import ConnectionManager, reconnect
 
 
 class NotificationService:
@@ -67,6 +67,7 @@ class NotificationService:
 
         ch.basic_ack(delivery_tag=method.delivery_tag)
 
+    @reconnect
     def publish_notification(self, notification):
         self.channel_producer.basic_publish(
             exchange=Exchanges.NOTIFICATION_EXCHANGE.declaration,
@@ -91,8 +92,11 @@ class NotificationService:
             self.publish_notification(notification)
             self.producer_queue.task_done()
 
+    @reconnect
     def consume(self):
-        print(f"[spring_green3][Notification {self.id}][/spring_green3] Aguardando eventos de pedidos...")
+        print(
+            f"[spring_green3][Notification {self.id}][/spring_green3] Aguardando eventos de pedidos..."
+        )
         self.channel_consumer.start_consuming()
 
     def run(self):
@@ -103,13 +107,17 @@ class NotificationService:
         self.producer_thread.start()
 
         try:
-            print(f"[spring_green3][Notification {self.id}][/spring_green3] Pressione 'Ctrl + C' para sair.\n")
+            print(
+                f"[spring_green3][Notification {self.id}][/spring_green3] Pressione 'Ctrl + C' para sair.\n"
+            )
 
             while True:
                 pass
 
         except KeyboardInterrupt:
-            print(f"\n[spring_green3][Notification {self.id}][/spring_green3] Encerrando.")
+            print(
+                f"\n[spring_green3][Notification {self.id}][/spring_green3] Encerrando."
+            )
 
         finally:
             if self.channel_consumer.is_open:
@@ -122,7 +130,9 @@ class NotificationService:
             if self.channel_consumer.connection.is_open:
                 self.channel_consumer.close()
 
-            print(f"[spring_green3][Notification {self.id}][/spring_green3] Conexão fechada.")
+            print(
+                f"[spring_green3][Notification {self.id}][/spring_green3] Conexão fechada."
+            )
 
 
 if __name__ == "__main__":
